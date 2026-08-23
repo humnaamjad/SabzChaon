@@ -1,0 +1,33 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return request.auth.uid == userId; }
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isOwner(userId);
+    }
+
+    match /campaigns/{campaignId} {
+      allow read: if true; // public browse per feature 1
+      allow write: if isSignedIn(); // tighten to ngo role via a custom claim or lookup if time allows
+    }
+
+    match /trees/{treeId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    match /treeUpdates/{updateId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if false; // updates are append-only per the tree history model
+    }
+
+    match /{document=**} {
+      allow read, write: if false; // deny-by-default for anything not listed above
+    }
+  }
+}

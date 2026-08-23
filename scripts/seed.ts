@@ -1,0 +1,415 @@
+/**
+ * Seed script for Firestore (§14 — Seed Data for Demo).
+ *
+ * Run: npx tsx scripts/seed.ts
+ *
+ * Prerequisites:
+ *   - .env.local must contain valid FIREBASE_ADMIN_* values
+ *   - Firestore database must exist (create in Firebase console first)
+ *
+ * This script is idempotent — it overwrites documents by fixed IDs.
+ */
+
+import { initializeApp, cert, getApps } from "firebase-admin/app";
+import { getFirestore, Timestamp } from "firebase-admin/firestore";
+import * as dotenv from "dotenv";
+import * as path from "path";
+
+// Load .env.local for admin credentials
+dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
+
+// ─── Initialize Admin SDK ────────────────────────────────────────────────────
+
+if (getApps().length === 0) {
+  initializeApp({
+    credential: cert({
+      projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(
+        /\\n/gm,
+        "\n"
+      ),
+    }),
+  });
+}
+
+const db = getFirestore();
+
+// ─── Helper ──────────────────────────────────────────────────────────────────
+
+function iso(daysAgo: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
+  return d.toISOString();
+}
+
+// ─── Seed Data ───────────────────────────────────────────────────────────────
+
+const ngos = [
+  {
+    id: "ngo-green-pakistan",
+    name: "Green Pakistan Foundation",
+    description:
+      "Leading reforestation efforts across Punjab and Sindh since 2018.",
+    contactEmail: "info@greenpakistan.org",
+    createdAt: iso(180),
+  },
+  {
+    id: "ngo-clean-air-karachi",
+    name: "Clean Air Karachi",
+    description:
+      "Urban tree planting initiative focused on Karachi's green cover restoration.",
+    contactEmail: "contact@cleanairkarachi.org",
+    createdAt: iso(120),
+  },
+];
+
+const campaigns = [
+  {
+    id: "campaign-monsoon-2026",
+    ngoId: "ngo-green-pakistan",
+    title: "Monsoon Plantation Drive 2026",
+    location: "Lahore, Punjab",
+    date: iso(10),
+    treesPlannedCount: 500,
+    volunteersNeeded: 100,
+    status: "active",
+    createdAt: iso(60),
+  },
+  {
+    id: "campus-greening-2026",
+    ngoId: "ngo-clean-air-karachi",
+    title: "Campus Greening Initiative",
+    location: "Karachi, Sindh",
+    date: iso(-14),
+    treesPlannedCount: 200,
+    volunteersNeeded: 50,
+    status: "upcoming",
+    createdAt: iso(30),
+  },
+  {
+    id: "campaign-river-belt-2025",
+    ngoId: "ngo-green-pakistan",
+    title: "River Belt Restoration",
+    location: "Sukkur, Sindh",
+    date: iso(120),
+    treesPlannedCount: 1000,
+    volunteersNeeded: 200,
+    status: "completed",
+    createdAt: iso(150),
+  },
+];
+
+const users = [
+  // NGO users
+  {
+    id: "user-ngo-ahmed",
+    name: "Ahmed Raza",
+    email: "ahmed@greenpakistan.org",
+    role: "ngo",
+    ngoId: "ngo-green-pakistan",
+    createdAt: iso(180),
+  },
+  {
+    id: "user-ngo-fatima",
+    name: "Fatima Khan",
+    email: "fatima@cleanairkarachi.org",
+    role: "ngo",
+    ngoId: "ngo-clean-air-karachi",
+    createdAt: iso(120),
+  },
+  // Volunteer users
+  {
+    id: "user-vol-bilal",
+    name: "Bilal Hussain",
+    email: "bilal@example.com",
+    role: "volunteer",
+    ngoId: null,
+    createdAt: iso(90),
+  },
+  {
+    id: "user-vol-sara",
+    name: "Sara Malik",
+    email: "sara@example.com",
+    role: "volunteer",
+    ngoId: null,
+    createdAt: iso(85),
+  },
+  {
+    id: "user-vol-ali",
+    name: "Ali Hassan",
+    email: "ali@example.com",
+    role: "volunteer",
+    ngoId: null,
+    createdAt: iso(80),
+  },
+  {
+    id: "user-vol-zainab",
+    name: "Zainab Noor",
+    email: "zainab@example.com",
+    role: "volunteer",
+    ngoId: null,
+    createdAt: iso(75),
+  },
+  {
+    id: "user-vol-hamza",
+    name: "Hamza Tariq",
+    email: "hamza@example.com",
+    role: "volunteer",
+    ngoId: null,
+    createdAt: iso(60),
+  },
+];
+
+const trees = [
+  // Active campaign trees — some near alert threshold
+  {
+    id: "SC-2026-000001",
+    campaignId: "campaign-monsoon-2026",
+    guardianId: "user-vol-bilal",
+    species: "Neem",
+    plantingDate: iso(10),
+    location: "Lahore, Punjab",
+    currentStatus: "healthy",
+    consecutiveNeedsAttentionCount: 0,
+    createdAt: iso(10),
+  },
+  {
+    id: "SC-2026-000002",
+    campaignId: "campaign-monsoon-2026",
+    guardianId: "user-vol-sara",
+    species: "Peepal",
+    plantingDate: iso(10),
+    location: "Lahore, Punjab",
+    currentStatus: "needs_attention",
+    consecutiveNeedsAttentionCount: 2, // one more triggers NgoAlert
+    createdAt: iso(10),
+  },
+  {
+    id: "SC-2026-000003",
+    campaignId: "campaign-monsoon-2026",
+    guardianId: "user-vol-ali",
+    species: "Banyan",
+    plantingDate: iso(10),
+    location: "Lahore, Punjab",
+    currentStatus: "needs_attention",
+    consecutiveNeedsAttentionCount: 2, // near threshold
+    createdAt: iso(10),
+  },
+  {
+    id: "SC-2026-000004",
+    campaignId: "campaign-monsoon-2026",
+    guardianId: "user-vol-zainab",
+    species: "Gulmohar",
+    plantingDate: iso(10),
+    location: "Lahore, Punjab",
+    currentStatus: "healthy",
+    consecutiveNeedsAttentionCount: 0,
+    createdAt: iso(10),
+  },
+  {
+    id: "SC-2026-000005",
+    campaignId: "campaign-monsoon-2026",
+    guardianId: "user-vol-hamza",
+    species: "Amaltas",
+    plantingDate: iso(10),
+    location: "Lahore, Punjab",
+    currentStatus: "healthy",
+    consecutiveNeedsAttentionCount: 1,
+    createdAt: iso(10),
+  },
+  // Completed campaign trees
+  {
+    id: "SC-2025-000001",
+    campaignId: "campaign-river-belt-2025",
+    guardianId: "user-vol-bilal",
+    species: "Eucalyptus",
+    plantingDate: iso(120),
+    location: "Sukkur, Sindh",
+    currentStatus: "healthy",
+    consecutiveNeedsAttentionCount: 0,
+    createdAt: iso(120),
+  },
+  {
+    id: "SC-2025-000002",
+    campaignId: "campaign-river-belt-2025",
+    guardianId: "user-vol-sara",
+    species: "Kikar",
+    plantingDate: iso(120),
+    location: "Sukkur, Sindh",
+    currentStatus: "needs_attention",
+    consecutiveNeedsAttentionCount: 3, // should have an alert
+    createdAt: iso(120),
+  },
+  {
+    id: "SC-2025-000003",
+    campaignId: "campaign-river-belt-2025",
+    guardianId: "user-vol-ali",
+    species: "Babul",
+    plantingDate: iso(120),
+    location: "Sukkur, Sindh",
+    currentStatus: "unknown",
+    consecutiveNeedsAttentionCount: 0,
+    createdAt: iso(120),
+  },
+];
+
+const treeUpdates = [
+  // Updates for SC-2026-000001 (healthy tree)
+  {
+    id: "update-001",
+    treeId: "SC-2026-000001",
+    guardianId: "user-vol-bilal",
+    photoUrl: "https://example.com/photos/neem-healthy-1.jpg",
+    textNote: "Tree is growing well, new leaves visible.",
+    aiStatus: "healthy",
+    aiCareRecommendation: "Continue regular watering. Tree looks healthy.",
+    aiConfidenceNote: "Green foliage clearly visible",
+    submittedAt: iso(7),
+  },
+  {
+    id: "update-002",
+    treeId: "SC-2026-000001",
+    guardianId: "user-vol-bilal",
+    photoUrl: "https://example.com/photos/neem-healthy-2.jpg",
+    textNote: "Weekly check-in, looking good.",
+    aiStatus: "healthy",
+    aiCareRecommendation: "No action needed. Keep up the good work.",
+    aiConfidenceNote: "Full canopy, healthy green color",
+    submittedAt: iso(3),
+  },
+  // Updates for SC-2026-000002 (needs attention, count=2)
+  {
+    id: "update-003",
+    treeId: "SC-2026-000002",
+    guardianId: "user-vol-sara",
+    photoUrl: "https://example.com/photos/peepal-attention-1.jpg",
+    textNote: "Leaves look a bit yellow.",
+    aiStatus: "needs_attention",
+    aiCareRecommendation:
+      "Yellowing leaves may indicate overwatering or nutrient deficiency. Reduce watering frequency.",
+    aiConfidenceNote: "Yellowing visible on lower leaves",
+    submittedAt: iso(7),
+  },
+  {
+    id: "update-004",
+    treeId: "SC-2026-000002",
+    guardianId: "user-vol-sara",
+    photoUrl: "https://example.com/photos/peepal-attention-2.jpg",
+    textNote: "Still yellowing, some leaves dropping.",
+    aiStatus: "needs_attention",
+    aiCareRecommendation:
+      "Persistent yellowing suggests possible root issues. Check soil drainage.",
+    aiConfidenceNote: "Leaf discoloration and drop visible",
+    submittedAt: iso(3),
+  },
+  // Updates for SC-2026-000003 (needs attention, count=2)
+  {
+    id: "update-005",
+    treeId: "SC-2026-000003",
+    guardianId: "user-vol-ali",
+    photoUrl: "https://example.com/photos/banyan-attention-1.jpg",
+    textNote: "Some brown spots on leaves.",
+    aiStatus: "needs_attention",
+    aiCareRecommendation:
+      "Brown spots may indicate fungal infection. Consider improving air circulation.",
+    aiConfidenceNote: "Brown spots visible on leaf surfaces",
+    submittedAt: iso(6),
+  },
+  {
+    id: "update-006",
+    treeId: "SC-2026-000003",
+    guardianId: "user-vol-ali",
+    photoUrl: "https://example.com/photos/banyan-attention-2.jpg",
+    textNote: "Spots spreading.",
+    aiStatus: "needs_attention",
+    aiCareRecommendation:
+      "Spreading discoloration is concerning. Prune affected branches if possible.",
+    aiConfidenceNote: "Increased brown area compared to typical patterns",
+    submittedAt: iso(2),
+  },
+  // Update for SC-2026-000004 (healthy)
+  {
+    id: "update-007",
+    treeId: "SC-2026-000004",
+    guardianId: "user-vol-zainab",
+    photoUrl: "https://example.com/photos/gulmohar-healthy.jpg",
+    textNote: "Beautiful growth, first flowers appearing!",
+    aiStatus: "healthy",
+    aiCareRecommendation: "Excellent condition. Maintain current care routine.",
+    aiConfidenceNote: "Vibrant green color and new growth visible",
+    submittedAt: iso(4),
+  },
+  // Update for SC-2026-000005 (healthy but had one needs_attention)
+  {
+    id: "update-008",
+    treeId: "SC-2026-000005",
+    guardianId: "user-vol-hamza",
+    photoUrl: "https://example.com/photos/amaltas-mixed.jpg",
+    textNote: "Was wilting last week but recovering now.",
+    aiStatus: "healthy",
+    aiCareRecommendation:
+      "Recovery signs visible. Continue regular watering schedule.",
+    aiConfidenceNote: "New leaf growth visible alongside older healthy leaves",
+    submittedAt: iso(5),
+  },
+  // Updates for completed campaign tree with alert
+  {
+    id: "update-009",
+    treeId: "SC-2025-000002",
+    guardianId: "user-vol-sara",
+    photoUrl: "https://example.com/photos/kikar-alert-1.jpg",
+    textNote: "Tree looks dry.",
+    aiStatus: "needs_attention",
+    aiCareRecommendation: "Tree shows signs of drought stress. Increase watering.",
+    aiConfidenceNote: "Wilted and dry leaves visible",
+    submittedAt: iso(60),
+  },
+  {
+    id: "update-010",
+    treeId: "SC-2025-000002",
+    guardianId: "user-vol-sara",
+    photoUrl: "https://example.com/photos/kikar-alert-2.jpg",
+    textNote: "Still dry despite watering.",
+    aiStatus: "needs_attention",
+    aiCareRecommendation:
+      "Persistent dryness may indicate root damage. Professional inspection recommended.",
+    aiConfidenceNote: "Continued wilting despite reported watering",
+    submittedAt: iso(45),
+  },
+];
+
+// ─── Seed Function ───────────────────────────────────────────────────────────
+
+async function seed() {
+  console.log("🌱 Seeding Firestore with demo data...\n");
+
+  const collections: { name: string; docs: { id: string; [key: string]: unknown }[] }[] = [
+    { name: "ngos", docs: ngos },
+    { name: "campaigns", docs: campaigns },
+    { name: "users", docs: users },
+    { name: "trees", docs: trees },
+    { name: "treeUpdates", docs: treeUpdates },
+  ];
+
+  for (const collection of collections) {
+    console.log(`  Seeding ${collection.name} (${collection.docs.length} docs)...`);
+    const batch = db.batch();
+    for (const doc of collection.docs) {
+      const { id, ...data } = doc;
+      const ref = db.collection(collection.name).doc(id);
+      batch.set(ref, data);
+    }
+    await batch.commit();
+    console.log(`  ✓ ${collection.name} done`);
+  }
+
+  console.log("\n✅ Seed complete! Firestore is ready for development.");
+}
+
+seed()
+  .then(() => process.exit(0))
+  .catch((err) => {
+    console.error("❌ Seed failed:", err);
+    process.exit(1);
+  });
