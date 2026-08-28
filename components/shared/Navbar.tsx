@@ -25,17 +25,17 @@ interface NavItem {
 
 const ngoNavItems: NavItem[] = [
   {
-    href: "/(ngo)/dashboard",
+    href: "/dashboard",
     label: "Dashboard",
     icon: <LayoutDashboard className="h-4 w-4" />,
   },
   {
-    href: "/(ngo)/campaigns",
+    href: "/campaigns",
     label: "Campaigns",
     icon: <Megaphone className="h-4 w-4" />,
   },
   {
-    href: "/(ngo)/alerts",
+    href: "/alerts",
     label: "Alerts",
     icon: <Bell className="h-4 w-4" />,
   },
@@ -43,12 +43,12 @@ const ngoNavItems: NavItem[] = [
 
 const volunteerNavItems: NavItem[] = [
   {
-    href: "/(volunteer)/campaigns",
+    href: "/campaigns",
     label: "Campaigns",
     icon: <Users className="h-4 w-4" />,
   },
   {
-    href: "/(volunteer)/my-trees",
+    href: "/my-trees",
     label: "My Trees",
     icon: <TreePine className="h-4 w-4" />,
   },
