@@ -7,6 +7,24 @@ import { requireRole } from "@/lib/auth";
 import { getAdminFirestore } from "@/lib/firebase";
 import type { NgoAlert, ApiResponse } from "@/types/entities";
 
+// Firestore Timestamp objects survive doc.data() as { _seconds, _nanoseconds }.
+// Convert any such field to an ISO string so the client can parse it with new Date().
+function serializeDoc<T extends Record<string, unknown>>(data: T): T {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (
+      value &&
+      typeof value === "object" &&
+      typeof (value as Record<string, unknown>).toDate === "function"
+    ) {
+      result[key] = ((value as { toDate: () => Date }).toDate()).toISOString();
+    } else {
+      result[key] = value;
+    }
+  }
+  return result as T;
+}
+
 export async function GET(request: Request) {
   const session = await requireRole(request, "ngo");
   if (!session) {
@@ -25,7 +43,7 @@ export async function GET(request: Request) {
     .get();
 
   const alerts: NgoAlert[] = snapshot.docs.map(
-    (doc) => doc.data() as NgoAlert
+    (doc) => serializeDoc(doc.data() as Record<string, unknown>) as unknown as NgoAlert
   );
 
   return NextResponse.json(
@@ -75,7 +93,7 @@ export async function PATCH(request: Request) {
     );
   }
 
-  const alert = alertDoc.data() as NgoAlert;
+  const alert = serializeDoc(alertDoc.data() as Record<string, unknown>) as unknown as NgoAlert;
 
   if (alert.ngoId !== session.ngoId) {
     return NextResponse.json(
@@ -100,7 +118,9 @@ export async function PATCH(request: Request) {
     .update({ resolvedAt: new Date().toISOString() });
 
   const updatedDoc = await db.collection("ngoAlerts").doc(id).get();
-  const updatedAlert = updatedDoc.data() as NgoAlert;
+  const updatedAlert = serializeDoc(
+    updatedDoc.data() as Record<string, unknown>
+  ) as unknown as NgoAlert;
 
   return NextResponse.json(
     { success: true, data: updatedAlert } satisfies ApiResponse<NgoAlert>

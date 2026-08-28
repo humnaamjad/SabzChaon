@@ -34,15 +34,24 @@ export async function verifyRequestAuth(
     const db = await getAdminFirestore();
     const userDoc = await db.collection("users").doc(decodedToken.uid).get();
 
-    if (!userDoc.exists) return null;
+    if (!userDoc.exists) {
+      console.error(`[auth] User doc not found for uid: ${decodedToken.uid}`);
+      return null;
+    }
 
     const userData = userDoc.data() as User;
+    if (!userData.role) {
+      console.error(`[auth] User ${decodedToken.uid} has no role field in Firestore doc`);
+      return null;
+    }
+
     return {
       uid: decodedToken.uid,
       role: userData.role,
       ngoId: userData.ngoId ?? null,
     };
-  } catch {
+  } catch (err) {
+    console.error("[auth] verifyRequestAuth failed:", err);
     return null;
   }
 }
