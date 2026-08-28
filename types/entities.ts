@@ -10,7 +10,7 @@ export type CampaignStatus = "upcoming" | "active" | "completed";
 
 export type TreeStatus = "healthy" | "needs_attention" | "unknown";
 
-export type AiStatus = "healthy" | "needs_attention";
+export type AiStatus = "healthy" | "needs_attention" | "unknown";
 
 export type ReminderStatus = "pending" | "sent" | "acknowledged";
 
