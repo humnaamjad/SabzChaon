@@ -6,7 +6,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PROTECTED_PREFIXES = ["/(ngo)", "/(volunteer)"];
+// Route groups (e.g. (ngo), (volunteer)) don't appear in URLs,
+// so we match on the actual URL paths served by those groups.
+const PROTECTED_PATHS = ["/dashboard", "/campaigns", "/alerts", "/my-trees"];
 const AUTH_PAGE = "/auth";
 
 export function proxy(request: NextRequest) {
@@ -22,8 +24,8 @@ export function proxy(request: NextRequest) {
   }
 
   // Check if the route is protected
-  const isProtected = PROTECTED_PREFIXES.some((prefix) =>
-    pathname.startsWith(prefix)
+  const isProtected = PROTECTED_PATHS.some((p) =>
+    pathname === p || pathname.startsWith(p + "/")
   );
 
   if (isProtected) {

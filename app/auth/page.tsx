@@ -27,6 +27,7 @@ function AuthForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [ngoName, setNgoName] = useState("");
   const [role, setRole] = useState<UserRole>("volunteer");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -59,7 +60,12 @@ function AuthForm() {
           setLoading(false);
           return;
         }
-        await signUp(email, password, name.trim(), role);
+        if (role === "ngo" && !ngoName.trim()) {
+          setError("NGO name is required.");
+          setLoading(false);
+          return;
+        }
+        await signUp(email, password, name.trim(), role, ngoName.trim() || undefined);
       }
       // Redirect after successful auth
       router.push(redirect);
@@ -226,6 +232,27 @@ function AuthForm() {
                     🏢 NGO
                   </button>
                 </div>
+              </div>
+            )}
+
+            {/* NGO Name field (signup + ngo role only) */}
+            {mode === "signup" && role === "ngo" && (
+              <div>
+                <label
+                  htmlFor="ngoName"
+                  className="mb-1 block text-sm font-medium text-inktext"
+                >
+                  NGO Name
+                </label>
+                <input
+                  id="ngoName"
+                  type="text"
+                  value={ngoName}
+                  onChange={(e) => setNgoName(e.target.value)}
+                  className="w-full rounded-lg border border-warmgray-border bg-white px-3 py-2 text-sm text-inktext placeholder:text-warmgray-text focus:border-forest focus:ring-1 focus:ring-forest focus:outline-none"
+                  placeholder="Your organization's name"
+                  required
+                />
               </div>
             )}
 

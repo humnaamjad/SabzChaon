@@ -18,9 +18,9 @@ import {
   signOut as firebaseSignOut,
   type User as FirebaseUser,
 } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { collection, doc, getDoc, setDoc, writeBatch } from "firebase/firestore";
 import { auth, db } from "@/lib/firebaseClient";
-import type { UserRole, User } from "@/types/entities";
+import type { UserRole, User, Ngo } from "@/types/entities";
 
 interface AuthContextValue {
   user: FirebaseUser | null;
@@ -32,7 +32,7 @@ interface AuthContextValue {
     password: string,
     name: string,
     role: UserRole,
-    ngoId?: string
+    ngoName?: string
   ) => Promise<void>;
   signOut: () => Promise<void>;
   updateUserRole: (role: UserRole, ngoId?: string) => Promise<void>;
@@ -96,24 +96,61 @@ export default function AuthProvider({
       password: string,
       name: string,
       role: UserRole,
-      ngoId?: string
+      ngoName?: string
     ) => {
       const credential = await createUserWithEmailAndPassword(
         auth,
         email,
         password
       );
-      // Create user document in Firestore
-      const newUser: User = {
-        id: credential.user.uid,
-        name,
-        email,
-        role,
-        ngoId: ngoId ?? null,
-        createdAt: new Date().toISOString(),
-      };
-      await setDoc(doc(db, "users", credential.user.uid), newUser);
-      setUserDoc(newUser);
+
+      const uid = credential.user.uid;
+      const now = new Date().toISOString();
+
+      if (role === "ngo") {
+        // NGO signup: create Ngo document + User document atomically via batch.
+        // The ngoId is generated here and set on the User document so it is
+        // never null after signup completes.
+        const ngoRef = doc(collection(db, "ngos")); // auto-generated Firestore ID
+        const ngoId = ngoRef.id;
+
+        const newNgo: Ngo = {
+          id: ngoId,
+          name: ngoName ?? name,
+          description: "",
+          contactEmail: email,
+          createdAt: now,
+        };
+
+        const newUser: User = {
+          id: uid,
+          name,
+          email,
+          role,
+          ngoId,
+          createdAt: now,
+        };
+
+        const batch = writeBatch(db);
+        batch.set(ngoRef, newNgo);
+        batch.set(doc(db, "users", uid), newUser);
+        await batch.commit();
+
+        setUserDoc(newUser);
+      } else {
+        // Volunteer signup: create User document only (no Ngo needed).
+        const newUser: User = {
+          id: uid,
+          name,
+          email,
+          role,
+          ngoId: null,
+          createdAt: now,
+        };
+
+        await setDoc(doc(db, "users", uid), newUser);
+        setUserDoc(newUser);
+      }
     },
     []
   );
