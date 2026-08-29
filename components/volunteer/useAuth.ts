@@ -10,7 +10,7 @@
 
 import { useState, useEffect } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
-import { clientAuth } from "@/lib/firebaseClient";
+import { auth } from "@/lib/firebaseClient";
 
 interface AuthState {
   user: User | null;
@@ -26,7 +26,7 @@ export function useAuth(): AuthState {
   });
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(clientAuth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       setState({
         user,
         userId: user?.uid ?? null,

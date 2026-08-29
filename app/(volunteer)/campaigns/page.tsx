@@ -9,7 +9,7 @@
 
 import { useState, useEffect } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
-import { clientDb } from "@/lib/firebaseClient";
+import { db } from "@/lib/firebaseClient";
 import { TreePine, Search, Loader2 } from "lucide-react";
 import { useAuth } from "@/components/volunteer/useAuth";
 import { CampaignCard } from "@/components/volunteer/CampaignCard";
@@ -29,7 +29,7 @@ export default function CampaignsPage() {
       try {
         setLoading(true);
         const q = query(
-          collection(clientDb, "campaigns"),
+          collection(db, "campaigns"),
           where("status", "in", ["upcoming", "active"])
         );
         const snapshot = await getDocs(q);
@@ -57,7 +57,7 @@ export default function CampaignsPage() {
     async function fetchMemberships() {
       try {
         const q = query(
-          collection(clientDb, "campaignMemberships"),
+          collection(db, "campaignMemberships"),
           where("userId", "==", userId)
         );
         const snapshot = await getDocs(q);

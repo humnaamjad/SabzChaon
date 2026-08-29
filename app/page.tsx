@@ -1,41 +1,60 @@
+// Home page — redirects authenticated users to their role-based dashboard.
+// Unauthenticated users see a simple landing with a link to /auth.
+
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/shared/AuthProvider";
+import { TreePine } from "lucide-react";
+import Link from "next/link";
+import LoadingState from "@/components/shared/LoadingState";
+
 export default function Home() {
+  const { user, userDoc, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (loading) return;
+    if (user && userDoc) {
+      router.replace(
+        userDoc.role === "ngo" ? "/dashboard" : "/campaigns"
+      );
+    }
+  }, [user, userDoc, loading, router]);
+
+  if (loading) {
+    return <LoadingState />;
+  }
+
+  // If authenticated, we're redirecting — show loading
+  if (user && userDoc) {
+    return <LoadingState message="Redirecting to your dashboard…" />;
+  }
+
+  // Unauthenticated landing
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 dark:bg-black">
-      <main className="flex flex-col items-center gap-6 text-center px-8">
-        <h1 className="text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-          Sabz Chaon
-        </h1>
-        <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-md">
-          Project scaffold ready. Individual parts are being built by team
-          members on top of this shared foundation.
-        </p>
-        <div className="flex flex-col gap-3 text-sm text-zinc-500 dark:text-zinc-400">
-          <p>
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">
-              /auth
-            </span>{" "}
-            — Authentication (Part 1)
-          </p>
-          <p>
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">
-              /(ngo)/dashboard
-            </span>{" "}
-            — NGO Dashboard (Part 2)
-          </p>
-          <p>
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">
-              /(volunteer)/campaigns
-            </span>{" "}
-            — Browse Campaigns (Part 3)
-          </p>
-          <p>
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">
-              /api/ai/analyze-tree-photo
-            </span>{" "}
-            — AI Health Check (Part 4)
-          </p>
+    <div className="flex min-h-[calc(100vh-60px)] flex-col items-center justify-center bg-cream px-4">
+      <div className="max-w-lg text-center">
+        <div className="mb-6 flex justify-center">
+          <TreePine className="h-16 w-16 text-forest" />
         </div>
-      </main>
+        <h1 className="text-4xl font-semibold text-inktext">Sabz Chaon</h1>
+        <p className="mt-3 text-lg text-warmgray-text">
+          Turning &ldquo;trees planted&rdquo; into &ldquo;trees that survive.&rdquo;
+        </p>
+        <p className="mt-2 text-sm text-warmgray-text">
+          NGOs run plantation campaigns. Volunteers become tree guardians.
+          AI monitors tree health.
+        </p>
+        <Link
+          href="/auth"
+          className="mt-8 inline-flex items-center gap-2 rounded-lg bg-forest px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-forest-hover"
+        >
+          <TreePine className="h-4 w-4" />
+          Get Started
+        </Link>
+      </div>
     </div>
   );
 }

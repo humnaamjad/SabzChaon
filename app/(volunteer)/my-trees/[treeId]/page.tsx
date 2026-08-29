@@ -23,7 +23,7 @@ import {
   where,
   orderBy,
 } from "firebase/firestore";
-import { clientDb } from "@/lib/firebaseClient";
+import { db } from "@/lib/firebaseClient";
 import {
   ArrowLeft,
   TreePine,
@@ -59,7 +59,7 @@ export default function TreeProfilePage() {
       setError(null);
 
       // Fetch tree document
-      const treeDoc = await getDoc(doc(clientDb, "trees", treeId));
+      const treeDoc = await getDoc(doc(db, "trees", treeId));
       if (!treeDoc.exists()) {
         setError("Tree not found");
         return;
@@ -68,7 +68,7 @@ export default function TreeProfilePage() {
 
       // Fetch update history
       const updatesQuery = query(
-        collection(clientDb, "treeUpdates"),
+        collection(db, "treeUpdates"),
         where("treeId", "==", treeId),
         orderBy("submittedAt", "desc")
       );

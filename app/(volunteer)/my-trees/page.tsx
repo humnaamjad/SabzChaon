@@ -15,7 +15,7 @@ import {
   where,
   orderBy,
 } from "firebase/firestore";
-import { clientDb } from "@/lib/firebaseClient";
+import { db } from "@/lib/firebaseClient";
 import { TreePine, Loader2, Sprout } from "lucide-react";
 import { useAuth } from "@/components/volunteer/useAuth";
 import { TreeCard } from "@/components/volunteer/TreeCard";
@@ -38,7 +38,7 @@ export default function MyTreesPage() {
       try {
         setLoading(true);
         const q = query(
-          collection(clientDb, "trees"),
+          collection(db, "trees"),
           where("guardianId", "==", userId),
           orderBy("createdAt", "desc")
         );
