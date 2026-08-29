@@ -2,6 +2,9 @@
 // Lists open/active campaigns a volunteer can browse and join.
 // Calls Part 2's join endpoint (POST /api/campaigns/[id]/join).
 //
+// URL: /browse-campaigns (moved from /campaigns to resolve route conflict
+// with the NGO campaigns page at app/(ngo)/campaigns).
+//
 // Styled per THEME.md: cream background, forest/brown icons, cream-card surfaces.
 // Uses Lucide icons exclusively.
 
@@ -11,12 +14,13 @@ import { useState, useEffect } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebaseClient";
 import { TreePine, Search, Loader2 } from "lucide-react";
-import { useAuth } from "@/components/volunteer/useAuth";
+import { useAuth } from "@/components/shared/AuthProvider";
 import { CampaignCard } from "@/components/volunteer/CampaignCard";
 import type { Campaign } from "@/types/entities";
 
-export default function CampaignsPage() {
-  const { user, userId, loading: authLoading } = useAuth();
+export default function BrowseCampaignPage() {
+  const { user, userDoc, loading: authLoading } = useAuth();
+  const userId = user?.uid ?? null;
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [joinedIds, setJoinedIds] = useState<Set<string>>(new Set());
   const [joiningId, setJoiningId] = useState<string | null>(null);
@@ -80,16 +84,13 @@ export default function CampaignsPage() {
       const token = await user.getIdToken();
 
       // Call Part 2's join endpoint.
-      // NOTE: This assumes the join endpoint exists at POST /api/campaigns/[id]/join
-      // and accepts { userId } in the request body. If Part 2 hasn't built this yet,
-      // this call will fail gracefully with the error message below.
+      // POST /api/campaigns/[id]/join
       const response = await fetch(`/api/campaigns/${campaignId}/join`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ userId }),
       });
 
       const result = await response.json();

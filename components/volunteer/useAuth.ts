@@ -1,40 +1,9 @@
-// Minimal auth hook for Part 3 volunteer pages.
-// Wraps Firebase client Auth to expose user identity and loading state.
+// DEPRECATED — This local auth hook was created before Part 1's AuthProvider
+// was merged. All Part 3 pages now use the shared auth context instead:
+//   import { useAuth } from "@/components/shared/AuthProvider";
 //
-// NOTE: Part 1 owns the full auth context/provider. This hook exists
-// because Part 3 cannot modify lib/firebase.ts or create a shared provider.
-// When Part 1's auth context is ready, replace usage of this hook with
-// Part 1's context consumer.
-
-"use client";
-
-import { useState, useEffect } from "react";
-import { onAuthStateChanged, type User } from "firebase/auth";
-import { auth } from "@/lib/firebaseClient";
-
-interface AuthState {
-  user: User | null;
-  userId: string | null;
-  loading: boolean;
-}
-
-export function useAuth(): AuthState {
-  const [state, setState] = useState<AuthState>({
-    user: null,
-    userId: null,
-    loading: true,
-  });
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setState({
-        user,
-        userId: user?.uid ?? null,
-        loading: false,
-      });
-    });
-    return unsubscribe;
-  }, []);
-
-  return state;
-}
+// This file is kept temporarily as a reference. Safe to delete.
+//
+// Original implementation wrapped Firebase client onAuthStateChanged directly.
+// The shared AuthProvider provides the same data plus userDoc, signIn, signUp,
+// signOut, and updateUserRole.

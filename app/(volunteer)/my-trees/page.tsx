@@ -17,13 +17,14 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebaseClient";
 import { TreePine, Loader2, Sprout } from "lucide-react";
-import { useAuth } from "@/components/volunteer/useAuth";
+import { useAuth } from "@/components/shared/AuthProvider";
 import { TreeCard } from "@/components/volunteer/TreeCard";
 import type { Tree } from "@/types/entities";
 import Link from "next/link";
 
 export default function MyTreesPage() {
-  const { userId, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const userId = user?.uid ?? null;
   const [trees, setTrees] = useState<Tree[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -152,7 +153,7 @@ export default function MyTreesPage() {
               wait for it to close — you&apos;ll become a guardian automatically.
             </p>
             <Link
-              href="/campaigns"
+              href="/browse-campaigns"
               className="inline-flex items-center rounded-lg px-4 py-2 bg-forest text-white text-sm font-medium hover:bg-forest-hover transition-colors"
             >
               Browse Campaigns

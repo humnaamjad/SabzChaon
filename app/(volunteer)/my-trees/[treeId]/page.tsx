@@ -35,7 +35,7 @@ import {
   Loader2,
   MessageSquare,
 } from "lucide-react";
-import { useAuth } from "@/components/volunteer/useAuth";
+import { useAuth } from "@/components/shared/AuthProvider";
 import { StatusBadge } from "@/components/volunteer/StatusBadge";
 import { TreeUpdateForm } from "@/components/volunteer/TreeUpdateForm";
 import type { Tree, TreeUpdate } from "@/types/entities";
@@ -45,7 +45,8 @@ export default function TreeProfilePage() {
   const router = useRouter();
   const treeId = params.treeId as string;
 
-  const { user, userId, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const userId = user?.uid ?? null;
   const [tree, setTree] = useState<Tree | null>(null);
   const [updates, setUpdates] = useState<TreeUpdate[]>([]);
   const [loading, setLoading] = useState(true);
