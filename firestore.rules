@@ -26,6 +26,11 @@ service cloud.firestore {
       allow update, delete: if false; // updates are append-only per the tree history model
     }
 
+    match /ngos/{ngoId} {
+      allow create: if isSignedIn();
+      allow read, update, delete: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false; // deny-by-default for anything not listed above
     }

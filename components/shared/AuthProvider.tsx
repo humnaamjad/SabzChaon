@@ -18,7 +18,7 @@ import {
   signOut as firebaseSignOut,
   type User as FirebaseUser,
 } from "firebase/auth";
-import { doc, getDoc, setDoc, writeBatch } from "firebase/firestore";
+import { collection, doc, getDoc, setDoc, writeBatch } from "firebase/firestore";
 import { auth, db } from "@/lib/firebaseClient";
 import type { UserRole, User, Ngo } from "@/types/entities";
 
@@ -111,7 +111,7 @@ export default function AuthProvider({
         // NGO signup: create Ngo document + User document atomically via batch.
         // The ngoId is generated here and set on the User document so it is
         // never null after signup completes.
-        const ngoRef = doc(db, "ngos"); // auto-generated Firestore ID
+        const ngoRef = doc(collection(db, "ngos")); // auto-generated Firestore ID
         const ngoId = ngoRef.id;
 
         const newNgo: Ngo = {
