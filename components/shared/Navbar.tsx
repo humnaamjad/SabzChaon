@@ -43,7 +43,7 @@ const ngoNavItems: NavItem[] = [
 
 const volunteerNavItems: NavItem[] = [
   {
-    href: "/campaigns",
+    href: "/browse-campaigns",
     label: "Campaigns",
     icon: <Users className="h-4 w-4" />,
   },

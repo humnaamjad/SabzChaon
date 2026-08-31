@@ -18,7 +18,7 @@ export default function Home() {
     if (loading) return;
     if (user && userDoc) {
       router.replace(
-        userDoc.role === "ngo" ? "/dashboard" : "/campaigns"
+        userDoc.role === "ngo" ? "/dashboard" : "/browse-campaigns"
       );
     }
   }, [user, userDoc, loading, router]);

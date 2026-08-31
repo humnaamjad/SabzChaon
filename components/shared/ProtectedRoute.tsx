@@ -32,7 +32,7 @@ export default function ProtectedRoute({
     if (userDoc && userDoc.role !== requiredRole) {
       // Wrong role — redirect to appropriate home
       router.replace(
-        userDoc.role === "ngo" ? "/dashboard" : "/campaigns"
+        userDoc.role === "ngo" ? "/dashboard" : "/browse-campaigns"
       );
     }
   }, [user, userDoc, loading, requiredRole, router]);
