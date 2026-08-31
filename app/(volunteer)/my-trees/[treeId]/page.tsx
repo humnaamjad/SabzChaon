@@ -22,6 +22,7 @@ import {
   query,
   where,
   orderBy,
+  Timestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebaseClient";
 import {
@@ -75,7 +76,17 @@ export default function TreeProfilePage() {
       );
       const updatesSnapshot = await getDocs(updatesQuery);
       const updateList: TreeUpdate[] = updatesSnapshot.docs.map(
-        (doc) => ({ id: doc.id, ...doc.data() }) as TreeUpdate
+        (doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            submittedAt:
+              data.submittedAt instanceof Timestamp
+                ? data.submittedAt.toDate().toISOString()
+                : data.submittedAt,
+          } as TreeUpdate;
+        }
       );
       setUpdates(updateList);
     } catch (err) {

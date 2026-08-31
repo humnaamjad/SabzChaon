@@ -3,6 +3,7 @@
 // PATCH: closes out a campaign (sets status to "completed").
 //   Part 3's guardian-assignment logic hooks into this close-out action.
 
+import { assignGuardians } from "@/lib/assignGuardians";
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { getAdminFirestore } from "@/lib/firebase";
@@ -109,14 +110,10 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 
   // Close out the campaign
-  await db.collection("campaigns").doc(id).update({ status: "completed" });
+await db.collection("campaigns").doc(id).update({ status: "completed" });
 
-  // ─── HANDOFF TO PART 3 ──────────────────────────────────────────────
-  // Part 3's guardian-assignment logic should be called here.
-  // It sets CampaignMembership.becameGuardian = true and creates Tree records.
-  // Part 2 only triggers the campaign closure; Part 3 owns the assignment logic.
-  // TODO(Part 3): import and call assignGuardians(campaignId) here.
-  // ─────────────────────────────────────────────────────────────────────
+// Guardian assignment — create Tree records for all volunteers who joined
+const result = await assignGuardians(id);
 
   const updatedDoc = await db.collection("campaigns").doc(id).get();
   const updatedCampaign = updatedDoc.data() as Campaign;
