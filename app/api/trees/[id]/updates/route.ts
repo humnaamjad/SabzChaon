@@ -10,9 +10,8 @@
 // utility (lib/storage/uploadTreePhoto.ts — do not rewrite). The returned public
 // URL is saved as photoUrl on the TreeUpdate document.
 //
-// AI analysis (§10) is NOT called here — that's Part 4's responsibility.
-// The TreeUpdate is created with aiStatus = "unknown" as a placeholder.
-// Part 4 should wire in the analyzeTreePhoto call after creation.
+// AI analysis (§10) and avatar gamification (§11) are wired into the POST
+// handler. The TreeUpdate is written with AI results immediately after creation.
 //
 // Response shape per §9: { success: boolean, data?: ..., error?: string }
 
@@ -21,7 +20,9 @@ import { getAdminFirestore } from "@/lib/firebase";
 import { getAuthUserId } from "@/lib/serverAuth";
 import { uploadTreePhoto } from "@/lib/storage/uploadTreePhoto";
 import { Timestamp } from "firebase-admin/firestore";
-import type { TreeUpdate, ApiResponse } from "@/types/entities";
+import type { TreeUpdate, ApiResponse, AiStatus, GuardianAvatar } from "@/types/entities";
+import { processTreeUpdate } from "@/lib/updateProcessor";
+import { checkAndTriggerAlert } from "@/lib/alerts";
 
 export const dynamic = "force-dynamic";
 
@@ -121,39 +122,94 @@ export async function POST(
       photoUrl = await uploadTreePhoto(photoFile, treeId);
     }
 
-    // Generate a unique update ID
+    // Create TreeUpdate with placeholder AI values
     const updateRef = db.collection("treeUpdates").doc();
     const now = Timestamp.now();
 
-    const updateData = {
+    let aiStatus: AiStatus = "unknown";
+    let aiCareRecommendation = "";
+    let aiConfidenceNote = "";
+
+    // Write the placeholder document first
+    await updateRef.set({
       treeId,
       guardianId: userId,
       photoUrl,
       textNote: textNote || null,
-      aiStatus: "unknown" as const,
-      aiCareRecommendation: "",
-      aiConfidenceNote: "",
+      aiStatus,
+      aiCareRecommendation,
+      aiConfidenceNote,
       submittedAt: now,
-    };
-
-    await updateRef.set(updateData);
-
-    // ─── PART 4 FLAG ──────────────────────────────────────────────────────
-    // After this TreeUpdate is created, Part 4's analyzeTreePhoto should be
-    // called with the photoUrl (if present) to update aiStatus,
-    // aiCareRecommendation, and aiConfidenceNote on this document.
-    // The tree's currentStatus and consecutiveNeedsAttentionCount should
-    // also be updated based on the AI result.
-    // ─── END FLAG ─────────────────────────────────────────────────────────
-
-    // Update the tree's status to "unknown" until AI analysis runs
-    await db.collection("trees").doc(treeId).update({
-      currentStatus: "unknown",
     });
+
+    // Run AI analysis + gamification when a photo is available
+    if (photoUrl) {
+      // Read guardian's current avatar (or use seedling defaults)
+      const avatarDoc = await db
+        .collection("guardianAvatars")
+        .doc(userId)
+        .get();
+
+      const currentAvatar: GuardianAvatar = avatarDoc.exists
+        ? (avatarDoc.data() as GuardianAvatar)
+        : {
+            id: userId,
+            guardianId: userId,
+            growthStage: "seedling" as const,
+            lastUpdatedAt: new Date().toISOString(),
+            missedUpdateStreak: 0,
+          };
+
+      const result = await processTreeUpdate({
+        photoUrl,
+        textNote: textNote || undefined,
+        currentAvatar,
+      });
+
+      aiStatus = result.aiStatus;
+      aiCareRecommendation = result.aiCareRecommendation;
+      aiConfidenceNote = result.aiConfidenceNote ?? "";
+
+      // Patch the TreeUpdate with real AI results
+      await updateRef.update({
+        aiStatus,
+        aiCareRecommendation,
+        aiConfidenceNote,
+      });
+
+      // Upsert the updated avatar back to guardianAvatars/{guardianId}
+      await db
+        .collection("guardianAvatars")
+        .doc(userId)
+        .set(result.updatedAvatar);
+
+      // Alert logic — only meaningful for known health statuses.
+      // checkAndTriggerAlert also updates Tree.currentStatus and
+      // Tree.consecutiveNeedsAttentionCount, so no separate write needed.
+      if (aiStatus !== "unknown") {
+        await checkAndTriggerAlert(treeId, aiStatus);
+      } else {
+        // AI failed — mark tree status as unknown without touching alert counters
+        await db.collection("trees").doc(treeId).update({
+          currentStatus: "unknown",
+        });
+      }
+    } else {
+      // No photo — tree status stays unknown until analysis can run
+      await db.collection("trees").doc(treeId).update({
+        currentStatus: "unknown",
+      });
+    }
 
     const createdUpdate: TreeUpdate = {
       id: updateRef.id,
-      ...updateData,
+      treeId,
+      guardianId: userId,
+      photoUrl,
+      textNote: textNote || null,
+      aiStatus,
+      aiCareRecommendation,
+      aiConfidenceNote,
       submittedAt: now.toDate().toISOString(),
     };
 

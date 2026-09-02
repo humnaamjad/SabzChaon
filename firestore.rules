@@ -31,6 +31,10 @@ service cloud.firestore {
       allow read, update, delete: if false;
     }
 
+    match /guardianAvatars/{avatarId} {
+      allow read, write: if isSignedIn() && isOwner(avatarId);
+    }
+
     match /{document=**} {
       allow read, write: if false; // deny-by-default for anything not listed above
     }

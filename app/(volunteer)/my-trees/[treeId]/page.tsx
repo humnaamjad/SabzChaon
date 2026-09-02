@@ -2,10 +2,8 @@
 // Shows full tree details: species, campaign, planting date, location,
 // status, complete update history, and an update submission form.
 //
-// Includes a GUARDIAN AVATAR PLACEHOLDER — the actual avatar component
-// is built by Part 4 (§19 Part 4). This page renders a clearly-marked slot
-// that accepts the tree's current growth stage. Part 4 should replace the
-// placeholder with the real GuardianAvatar component.
+// GuardianAvatar component (§19 Part 4) renders the guardian's growth stage
+// visualization, fetched from the guardianAvatars Firestore collection.
 //
 // Styled per THEME.md: cream background, forest/brown icons, cream-card surfaces.
 // Uses Lucide icons exclusively.
@@ -32,14 +30,14 @@ import {
   Calendar,
   Leaf,
   Clock,
-  Image,
   Loader2,
   MessageSquare,
 } from "lucide-react";
 import { useAuth } from "@/components/shared/AuthProvider";
 import { StatusBadge } from "@/components/volunteer/StatusBadge";
 import { TreeUpdateForm } from "@/components/volunteer/TreeUpdateForm";
-import type { Tree, TreeUpdate } from "@/types/entities";
+import GuardianAvatar from "@/components/GuardianAvatar";
+import type { Tree, TreeUpdate, GuardianGrowthStage } from "@/types/entities";
 
 export default function TreeProfilePage() {
   const params = useParams();
@@ -53,6 +51,7 @@ export default function TreeProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [authToken, setAuthToken] = useState<string | null>(null);
+  const [growthStage, setGrowthStage] = useState<GuardianGrowthStage>("seedling");
 
   // Fetch tree details and update history
   const fetchTreeData = useCallback(async () => {
@@ -60,13 +59,21 @@ export default function TreeProfilePage() {
       setLoading(true);
       setError(null);
 
+      // Force Firebase to fully attach a fresh auth token before any
+      // Firestore reads — onAuthStateChanged can report the user as ready
+      // before Firestore's internal request layer has synced the token.
+      if (user) {
+        await user.getIdToken();
+      }
+
       // Fetch tree document
       const treeDoc = await getDoc(doc(db, "trees", treeId));
       if (!treeDoc.exists()) {
         setError("Tree not found");
         return;
       }
-      setTree({ id: treeDoc.id, ...treeDoc.data() } as Tree);
+      const treeData = { id: treeDoc.id, ...treeDoc.data() } as Tree;
+      setTree(treeData);
 
       // Fetch update history
       const updatesQuery = query(
@@ -89,6 +96,28 @@ export default function TreeProfilePage() {
         }
       );
       setUpdates(updateList);
+
+      // ── Guardian avatar fetch (§19 Part 4) ──────────────────────────
+      // Reset to default before fetching so stale state never persists
+      // from a previous render cycle or a prior fetchTreeData call.
+      setGrowthStage("seedling");
+
+      const gid = treeData.guardianId;
+      if (gid) {
+        try {
+          const avatarDoc = await getDoc(doc(db, "guardianAvatars", gid));
+
+          if (avatarDoc.exists()) {
+            const stage = avatarDoc.data().growthStage;
+            const validStages: string[] = ["seedling", "sprout", "sapling", "young_tree"];
+            if (stage && validStages.includes(stage)) {
+              setGrowthStage(stage as GuardianGrowthStage);
+            }
+          }
+        } catch (avatarErr) {
+          console.error("[Avatar] Firestore fetch error:", avatarErr);
+        }
+      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load tree details"
@@ -99,8 +128,12 @@ export default function TreeProfilePage() {
   }, [treeId]);
 
   useEffect(() => {
-    fetchTreeData();
-  }, [fetchTreeData]);
+    // Wait for Firebase Auth to finish initializing before fetching,
+    // so Firestore security rules have a valid request.auth.uid
+    if (!authLoading) {
+      fetchTreeData();
+    }
+  }, [fetchTreeData, authLoading]);
 
   // Get auth token for API calls
   useEffect(() => {
@@ -242,37 +275,22 @@ export default function TreeProfilePage() {
           </div>
         </div>
 
-        {/* ─── GUARDIAN AVATAR PLACEHOLDER ──────────────────────────────────
-          PART 4 FLAG: This is the slot for the GuardianAvatar component
-          that Part 4 builds (§19 Part 4, THEME.md §5).
-
-          Expected props interface (to be agreed with Part 4):
-            <GuardianAvatar
-              growthStage={growthStage}  // "seedling" | "sprout" | "sapling" | "young_tree"
-              guardianId={tree.guardianId}
-              size="md"                  // optional size variant
-            />
-
-          The growthStage should be derived from the GuardianAvatar document
-          for this tree's guardian. Until Part 4 delivers the component,
-          this placeholder renders a static icon with the stage label.
-        ──────────────────────────────────────────────────────────────────── */}
+        {/* ─── GUARDIAN AVATAR ──────────────────────────────────────────────── */}
         <div className="rounded-xl border border-warmgray-border bg-cream-card p-6 shadow-sm mb-6">
           <h2 className="text-lg font-semibold text-inktext mb-4">
             Guardian Avatar
           </h2>
           <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-[color:color-mix(in_srgb,var(--color-brown)_10%,transparent)] border-2 border-dashed border-warmgray-border">
-              <Leaf className="h-8 w-8 text-brown" />
-            </div>
+            <GuardianAvatar
+              growthStage={growthStage}
+              guardianId={tree.guardianId}
+            />
             <div>
-              <p className="text-sm font-medium text-inktext">
-                {/* Placeholder label — Part 4 will render the actual avatar */}
-                Avatar Slot (Part 4 Component)
+              <p className="text-sm font-medium text-inktext capitalize">
+                {growthStage.replace("_", " ")}
               </p>
               <p className="text-xs text-warmgray-text">
-                Growth stage visualization will appear here once the
-                GuardianAvatar component is wired in by Part 4.
+                Submit on-time updates to help your tree grow!
               </p>
             </div>
           </div>
