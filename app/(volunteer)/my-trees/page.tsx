@@ -90,7 +90,7 @@ export default function MyTreesPage() {
       <div className="mx-auto max-w-4xl px-4 py-8 animate-fade-up">
         {/* Guardian greeting */}
         {trees.length > 0 && (
-          <div className="mb-6 rounded-2xl border border-forest/15 bg-gradient-to-br from-forest/5 to-transparent p-6">
+          <div className="mb-6 rounded-2xl border border-forest/15 bg-gradient-to-br from-forest/5 to-transparent p-6 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-forest/10 ring-1 ring-forest/15">
                 <Shield className="h-5 w-5 text-forest" />
@@ -124,18 +124,18 @@ export default function MyTreesPage() {
               <p className="text-2xl font-bold text-forest">{trees.length}</p>
               <p className="text-xs text-warmgray-text">Total Trees</p>
             </div>
-            <div className="rounded-xl border border-warmgray-border/60 bg-cream-card p-4 shadow-sm text-center transition-shadow hover:shadow-md">
-              <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-forest/8">
+            <div className="rounded-xl border border-forest/20 bg-forest/5 p-4 shadow-sm text-center transition-shadow hover:shadow-md">
+              <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-forest/10">
                 <Heart className="h-4.5 w-4.5 text-forest" />
               </div>
               <p className="text-2xl font-bold text-forest">{healthyCount}</p>
               <p className="text-xs text-warmgray-text">Healthy</p>
             </div>
-            <div className="rounded-xl border border-warmgray-border/60 bg-cream-card p-4 shadow-sm text-center transition-shadow hover:shadow-md">
-              <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-alert-red/8">
-                <AlertTriangle className="h-4.5 w-4.5 text-alert-red" />
+            <div className="rounded-xl border border-brick/25 bg-brick/5 p-4 shadow-sm text-center transition-shadow hover:shadow-md">
+              <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-brick/10">
+                <AlertTriangle className="h-4.5 w-4.5 text-brick" />
               </div>
-              <p className="text-2xl font-bold text-alert-red">
+              <p className="text-2xl font-bold text-brick">
                 {needsAttentionCount}
               </p>
               <p className="text-xs text-warmgray-text">Needs Attention</p>

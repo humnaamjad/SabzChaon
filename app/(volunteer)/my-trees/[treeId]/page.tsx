@@ -38,7 +38,7 @@ import { useAuth } from "@/components/shared/AuthProvider";
 import { StatusBadge } from "@/components/volunteer/StatusBadge";
 import { TreeUpdateForm } from "@/components/volunteer/TreeUpdateForm";
 import GuardianAvatar from "@/components/GuardianAvatar";
-import type { Tree, TreeUpdate, GuardianGrowthStage } from "@/types/entities";
+import type { Tree, TreeUpdate, GuardianGrowthStage, Campaign } from "@/types/entities";
 
 export default function TreeProfilePage() {
   const params = useParams();
@@ -48,6 +48,7 @@ export default function TreeProfilePage() {
   const { user, loading: authLoading } = useAuth();
   const userId = user?.uid ?? null;
   const [tree, setTree] = useState<Tree | null>(null);
+  const [campaignTitle, setCampaignTitle] = useState<string | null>(null);
   const [updates, setUpdates] = useState<TreeUpdate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -76,13 +77,31 @@ export default function TreeProfilePage() {
       const treeData = { id: treeDoc.id, ...treeDoc.data() } as Tree;
       setTree(treeData);
 
-      // Fetch update history
+      // Fetch update history and the campaign document in parallel — the
+      // tree only stores a raw campaignId, and the profile displays the
+      // campaign's title instead.
       const updatesQuery = query(
         collection(db, "treeUpdates"),
         where("treeId", "==", treeId),
         orderBy("submittedAt", "desc")
       );
-      const updatesSnapshot = await getDocs(updatesQuery);
+      const [updatesSnapshot, campaignDoc] = await Promise.all([
+        getDocs(updatesQuery),
+        // A failed campaign read must not break the page — the UI falls
+        // back to the raw campaignId below. Logged like the avatar fetch
+        // so rules/permission issues surface in the console instead of
+        // failing silently.
+        getDoc(doc(db, "campaigns", treeData.campaignId)).catch((campaignErr) => {
+          console.error("[Campaign] Firestore fetch error:", campaignErr);
+          return null;
+        }),
+      ]);
+      const campaignData =
+        campaignDoc && campaignDoc.exists()
+          ? (campaignDoc.data() as Campaign)
+          : null;
+      setCampaignTitle(campaignData?.title ?? null);
+
       const updateList: TreeUpdate[] = updatesSnapshot.docs.map(
         (doc) => {
           const data = doc.data();
@@ -234,12 +253,14 @@ export default function TreeProfilePage() {
                 { icon: <MapPin className="h-5 w-5 text-brown" />, label: "Location", value: tree.location },
                 { icon: <Calendar className="h-5 w-5 text-brown" />, label: "Planting Date", value: new Date(tree.plantingDate).toLocaleDateString() },
                 { icon: <Leaf className="h-5 w-5 text-forest" />, label: "Species", value: tree.species },
-                { icon: <TreePine className="h-5 w-5 text-forest" />, label: "Campaign", value: tree.campaignId },
+                { icon: <TreePine className="h-5 w-5 text-forest" />, label: "Campaign", value: campaignTitle ?? tree.campaignId },
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 rounded-xl bg-cream p-3">
                   {item.icon}
                   <div>
-                    <p className="text-xs text-warmgray-text">{item.label}</p>
+                    <p className="text-xs font-medium uppercase tracking-widest text-warmgray-text">
+                      {item.label}
+                    </p>
                     <p className="text-sm font-medium text-inktext">{item.value}</p>
                   </div>
                 </div>
@@ -370,7 +391,7 @@ export default function TreeProfilePage() {
                       </div>
 
                       {/* Update card */}
-                      <div className="rounded-xl border border-warmgray-border/50 bg-cream p-4 transition-shadow hover:shadow-sm">
+                      <div className="rounded-xl border border-warmgray-border/50 bg-cream p-4 shadow-sm transition-shadow hover:shadow-md">
                         {/* Header: date + AI status */}
                         <div className="mb-3 flex items-center justify-between">
                           <p className="text-xs text-warmgray-text">
@@ -386,7 +407,7 @@ export default function TreeProfilePage() {
                             <img
                               src={update.photoUrl}
                               alt={`Tree update photo for ${treeId}`}
-                              className="w-full h-40 object-cover"
+                              className="aspect-video w-full object-cover"
                             />
                           </div>
                         )}

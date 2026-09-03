@@ -69,7 +69,7 @@ export default function Navbar() {
   const navItems = userDoc.role === "ngo" ? ngoNavItems : volunteerNavItems;
 
   return (
-    <header className="sticky top-0 z-30 border-b border-warmgray-border/70 bg-cream/80 backdrop-blur-md">
+    <header className="sticky top-0 z-30 border-b border-warmgray-border bg-cream/80 shadow-sm backdrop-blur-md">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-2.5">
         {/* Wordmark */}
         <Link

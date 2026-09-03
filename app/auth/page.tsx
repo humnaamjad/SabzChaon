@@ -18,6 +18,8 @@ import {
   Sprout,
   Shield,
   Leaf,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import LoadingState from "@/components/shared/LoadingState";
 
@@ -36,6 +38,7 @@ function AuthForm() {
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState("");
   const [ngoName, setNgoName] = useState("");
   const [role, setRole] = useState<UserRole>("volunteer");
@@ -277,16 +280,30 @@ function AuthForm() {
                 >
                   Password
                 </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-xl border border-warmgray-border bg-white px-4 py-2.5 text-sm text-inktext placeholder:text-warmgray-text/60 transition-colors focus:border-forest focus:ring-1 focus:ring-forest focus:outline-none"
-                  placeholder="At least 6 characters"
-                  required
-                  minLength={6}
-                />
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full rounded-xl border border-warmgray-border bg-white px-4 py-2.5 pr-11 text-sm text-inktext placeholder:text-warmgray-text/60 transition-colors focus:border-forest focus:ring-1 focus:ring-forest focus:outline-none"
+                    placeholder="At least 6 characters"
+                    required
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((s) => !s)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="absolute inset-y-0 right-0 flex w-11 cursor-pointer items-center justify-center rounded-r-xl text-warmgray-text transition-colors hover:text-forest focus-visible:ring-1 focus-visible:ring-forest focus-visible:outline-none"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
               </div>
 
               {/* Role selection (signup only) */}

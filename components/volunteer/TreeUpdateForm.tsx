@@ -98,7 +98,7 @@ export function TreeUpdateForm({
             className={`group flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 cursor-pointer transition-all duration-200 ${
               photo
                 ? "border-forest/40 bg-forest/3"
-                : "border-warmgray-border hover:border-forest/50 hover:bg-forest/3"
+                : "border-forest/30 hover:border-forest/60 hover:bg-forest/5"
             }`}
             onClick={() => fileInputRef.current?.click()}
           >
@@ -116,10 +116,10 @@ export function TreeUpdateForm({
               </div>
             ) : (
               <>
-                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-warmgray-border/30 transition-colors group-hover:bg-forest/10">
+                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-forest/8 transition-colors group-hover:bg-forest/12">
                   <ImagePlus className="h-6 w-6 text-warmgray-text transition-colors group-hover:text-forest" />
                 </div>
-                <p className="text-sm font-medium text-warmgray-text group-hover:text-inktext transition-colors">
+                <p className="text-sm font-medium text-warmgray-text group-hover:text-forest transition-colors">
                   Click to upload a photo
                 </p>
                 <p className="mt-1 text-xs text-warmgray-text">
