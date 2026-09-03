@@ -2,6 +2,7 @@
 // NGO sees: Dashboard, Campaigns, Alerts
 // Volunteer sees: Campaigns, My Trees
 // Shows wordmark, user name, and sign-out button.
+// Premium redesign: refined brand identity, polished states, mobile-aware.
 
 "use client";
 
@@ -13,9 +14,13 @@ import {
   LayoutDashboard,
   Megaphone,
   Bell,
-  Users,
+  Sprout,
   LogOut,
+  User,
+  Menu,
+  X,
 } from "lucide-react";
+import { useState } from "react";
 
 interface NavItem {
   href: string;
@@ -45,7 +50,7 @@ const volunteerNavItems: NavItem[] = [
   {
     href: "/browse-campaigns",
     label: "Campaigns",
-    icon: <Users className="h-4 w-4" />,
+    icon: <Megaphone className="h-4 w-4" />,
   },
   {
     href: "/my-trees",
@@ -57,35 +62,45 @@ const volunteerNavItems: NavItem[] = [
 export default function Navbar() {
   const { userDoc, signOut } = useAuth();
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   if (!userDoc) return null;
 
   const navItems = userDoc.role === "ngo" ? ngoNavItems : volunteerNavItems;
 
   return (
-    <header className="border-b border-warmgray-border bg-cream">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+    <header className="sticky top-0 z-30 border-b border-warmgray-border/70 bg-cream/80 backdrop-blur-md">
+      <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-2.5">
         {/* Wordmark */}
         <Link
           href="/"
-          className="flex items-center gap-2 text-lg font-semibold text-forest"
+          className="group flex items-center gap-2.5"
         >
-          <TreePine className="h-5 w-5" />
-          <span>Sabz Chaon</span>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-forest transition-colors group-hover:bg-forest-hover">
+            <TreePine className="h-4.5 w-4.5 text-white" />
+          </div>
+          <div className="flex flex-col leading-tight">
+            <span className="text-base font-semibold tracking-tight text-forest">
+              Sabz Chaon
+            </span>
+            <span className="hidden text-[10px] font-medium text-warmgray-text sm:block">
+              {userDoc.role === "ngo" ? "Impact Platform" : "Guardian Portal"}
+            </span>
+          </div>
         </Link>
 
-        {/* Navigation links */}
-        <div className="flex items-center gap-1">
+        {/* Desktop navigation links */}
+        <div className="hidden items-center gap-0.5 md:flex">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                className={`relative flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-all duration-200 ${
                   isActive
-                    ? "bg-forest text-white"
-                    : "text-inktext hover:bg-cream-card"
+                    ? "bg-forest text-white shadow-sm shadow-forest/20"
+                    : "text-warmgray-text hover:bg-forest/5 hover:text-inktext"
                 }`}
               >
                 {item.icon}
@@ -95,18 +110,76 @@ export default function Navbar() {
           })}
         </div>
 
-        {/* User info + sign out */}
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-warmgray-text">{userDoc.name}</span>
+        {/* User info + sign out (desktop) */}
+        <div className="hidden items-center gap-2 md:flex">
+          <div className="flex items-center gap-2 rounded-lg bg-cream-card px-3 py-1.5 ring-1 ring-warmgray-border/50">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-forest/10">
+              <User className="h-3.5 w-3.5 text-forest" />
+            </div>
+            <span className="text-sm font-medium text-inktext">
+              {userDoc.name}
+            </span>
+          </div>
           <button
             onClick={() => signOut()}
-            className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-warmgray-text transition-colors hover:bg-cream-card hover:text-inktext"
+            className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-warmgray-text transition-all duration-200 hover:bg-brick/5 hover:text-brick"
+            title="Sign out"
           >
             <LogOut className="h-4 w-4" />
-            Sign out
           </button>
         </div>
+
+        {/* Mobile menu toggle */}
+        <button
+          onClick={() => setMobileOpen(!mobileOpen)}
+          className="rounded-lg p-2 text-warmgray-text transition-colors hover:bg-cream-card md:hidden"
+          aria-label="Toggle menu"
+        >
+          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </button>
       </nav>
+
+      {/* Mobile dropdown menu */}
+      {mobileOpen && (
+        <div className="animate-fade-up border-t border-warmgray-border/50 bg-cream-card px-4 pb-4 pt-2 md:hidden">
+          <div className="mb-3 flex items-center gap-2 border-b border-warmgray-border/50 pb-3">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-forest/10">
+              <User className="h-4 w-4 text-forest" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-inktext">{userDoc.name}</p>
+              <p className="text-xs text-warmgray-text capitalize">{userDoc.role}</p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileOpen(false)}
+                  className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                    isActive
+                      ? "bg-forest text-white"
+                      : "text-inktext hover:bg-forest/5"
+                  }`}
+                >
+                  {item.icon}
+                  {item.label}
+                </Link>
+              );
+            })}
+            <button
+              onClick={() => signOut()}
+              className="mt-1 flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-warmgray-text transition-colors hover:bg-brick/5 hover:text-brick"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign out
+            </button>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

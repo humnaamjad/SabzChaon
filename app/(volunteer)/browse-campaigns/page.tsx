@@ -2,20 +2,20 @@
 // Lists open/active campaigns a volunteer can browse and join.
 // Calls Part 2's join endpoint (POST /api/campaigns/[id]/join).
 //
-// URL: /browse-campaigns (moved from /campaigns to resolve route conflict
-// with the NGO campaigns page at app/(ngo)/campaigns).
-//
-// Styled per THEME.md: cream background, forest/brown icons, cream-card surfaces.
-// Uses Lucide icons exclusively.
+// VISUAL REDESIGN: Engaging discovery experience with PageHeader, skeletons,
+// and EmptyState. All data-fetching and join logic preserved exactly.
 
 "use client";
 
 import { useState, useEffect } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebaseClient";
-import { TreePine, Search, Loader2 } from "lucide-react";
+import { TreePine, X } from "lucide-react";
 import { useAuth } from "@/components/shared/AuthProvider";
 import { CampaignCard } from "@/components/volunteer/CampaignCard";
+import PageHeader from "@/components/shared/PageHeader";
+import EmptyState from "@/components/shared/EmptyState";
+import { SkeletonList } from "@/components/shared/Skeleton";
 import type { Campaign } from "@/types/entities";
 
 export default function BrowseCampaignPage() {
@@ -109,13 +109,11 @@ export default function BrowseCampaignPage() {
     }
   }
 
-  if (authLoading || loading) {
+  if (authLoading) {
     return (
       <main className="min-h-screen bg-cream">
         <div className="mx-auto max-w-4xl px-4 py-8">
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-forest" />
-          </div>
+          <SkeletonList count={3} />
         </div>
       </main>
     );
@@ -123,56 +121,51 @@ export default function BrowseCampaignPage() {
 
   return (
     <main className="min-h-screen bg-cream">
-      <div className="mx-auto max-w-4xl px-4 py-8">
+      <div className="mx-auto max-w-4xl px-4 py-8 animate-fade-up">
         {/* Page header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[color:color-mix(in_srgb,var(--color-forest)_10%,transparent)]">
-              <TreePine className="h-5 w-5 text-forest" />
-            </div>
-            <h1 className="text-2xl font-semibold text-inktext">
-              Browse Campaigns
-            </h1>
-          </div>
-          <p className="text-sm text-warmgray-text">
-            Find open plantation campaigns near you and join as a volunteer.
-          </p>
-        </div>
+        <PageHeader
+          icon={<TreePine className="h-5 w-5 text-forest" />}
+          title="Browse Campaigns"
+          subtitle="Find open plantation campaigns near you and become a Guardian."
+        />
 
         {/* Error banner */}
         {error && (
-          <div className="mb-6 rounded-xl border border-warmgray-border bg-[color:color-mix(in_srgb,var(--color-brick)_10%,transparent)] p-4">
+          <div className="mb-6 flex items-start justify-between rounded-xl border border-brick/20 bg-brick/5 px-4 py-3">
             <p className="text-sm text-brick">{error}</p>
             <button
               onClick={() => setError(null)}
-              className="mt-2 text-xs text-warmgray-text hover:text-inktext"
+              className="ml-3 shrink-0 text-warmgray-text hover:text-inktext"
             >
-              Dismiss
+              <X className="h-4 w-4" />
             </button>
           </div>
         )}
 
         {/* Campaign list */}
-        {campaigns.length === 0 ? (
-          <div className="rounded-xl border border-warmgray-border bg-cream-card p-12 text-center shadow-sm">
-            <Search className="mx-auto h-12 w-12 text-warmgray-text mb-4" />
-            <h2 className="text-lg font-semibold text-inktext mb-2">
-              No campaigns available
-            </h2>
-            <p className="text-sm text-warmgray-text">
-              There are no open or active campaigns right now. Check back soon!
-            </p>
-          </div>
+        {loading ? (
+          <SkeletonList count={3} />
+        ) : campaigns.length === 0 ? (
+          <EmptyState
+            icon={<TreePine className="h-9 w-9 text-forest/40" />}
+            title="No campaigns available"
+            description="There are no open or active plantation campaigns right now. Check back soon — new drives are added regularly!"
+          />
         ) : (
-          <div className="grid gap-4">
-            {campaigns.map((campaign) => (
-              <CampaignCard
+          <div className="grid gap-5">
+            {campaigns.map((campaign, i) => (
+              <div
                 key={campaign.id}
-                campaign={campaign}
-                isJoined={joinedIds.has(campaign.id)}
-                isJoining={joiningId === campaign.id}
-                onJoin={handleJoin}
-              />
+                className="animate-fade-up"
+                style={{ animationDelay: `${i * 80}ms` }}
+              >
+                <CampaignCard
+                  campaign={campaign}
+                  isJoined={joinedIds.has(campaign.id)}
+                  isJoining={joiningId === campaign.id}
+                  onJoin={handleJoin}
+                />
+              </div>
             ))}
           </div>
         )}

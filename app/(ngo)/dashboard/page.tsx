@@ -2,6 +2,9 @@
 // Fetches from /api/dashboard for all metrics.
 // Shows: trees planted, active guardians, health breakdown,
 // update completion rate, survival rate, trees requiring attention.
+//
+// VISUAL REDESIGN: Professional impact-monitoring platform feel.
+// All API/data logic preserved exactly.
 
 "use client";
 
@@ -9,6 +12,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/components/shared/AuthProvider";
 import LoadingState from "@/components/shared/LoadingState";
 import ErrorState from "@/components/shared/ErrorState";
+import PageHeader from "@/components/shared/PageHeader";
+import EmptyState from "@/components/shared/EmptyState";
 import StatCard from "@/components/ngo/StatCard";
 import {
   TreePine,
@@ -18,6 +23,8 @@ import {
   TrendingUp,
   AlertTriangle,
   Activity,
+  Megaphone,
+  Sprout,
 } from "lucide-react";
 
 interface DashboardData {
@@ -81,14 +88,13 @@ export default function DashboardPage() {
   const unknownPct = totalTrees > 0 ? (data.healthBreakdown.unknown / totalTrees) * 100 : 0;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className="mx-auto max-w-6xl px-4 py-8 animate-fade-up">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-inktext">Dashboard</h1>
-        <p className="mt-1 text-sm text-warmgray-text">
-          Overview of your plantation impact
-        </p>
-      </div>
+      <PageHeader
+        icon={<Activity className="h-5 w-5 text-forest" />}
+        title="Impact Dashboard"
+        subtitle="What impact are we making? Real survival data, not just planting counts."
+      />
 
       {/* Stat cards grid */}
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -115,9 +121,10 @@ export default function DashboardPage() {
           subtitle="Trees currently healthy"
         />
         <StatCard
-          icon={<AlertTriangle className="h-5 w-5 text-ochre" />}
+          icon={<AlertTriangle className="h-5 w-5 text-alert-red" />}
           label="Trees Requiring Attention"
           value={data.treesRequiringAttention}
+          accentColor="alert-red"
         />
         <StatCard
           icon={<Activity className="h-5 w-5 text-forest" />}
@@ -131,32 +138,58 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Health breakdown bar */}
+      {/* Impact story flow */}
       {totalTrees > 0 && (
-        <div className="mb-8 rounded-xl border border-warmgray-border bg-cream-card p-5 shadow-sm">
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-inktext">
+        <div className="mb-8 rounded-2xl border border-warmgray-border/60 bg-cream-card p-6 shadow-sm">
+          <h2 className="mb-5 flex items-center gap-2 text-lg font-semibold text-inktext">
             <HeartPulse className="h-5 w-5 text-forest" />
             Health Breakdown
           </h2>
 
+          {/* Impact story flow */}
+          <div className="mb-6 flex flex-wrap items-center justify-center gap-2 text-xs font-medium text-warmgray-text">
+            <span className="flex items-center gap-1.5 rounded-lg bg-forest/5 px-3 py-1.5 text-forest">
+              <TreePine className="h-3.5 w-3.5" />
+              {data.treesPlanted} planted
+            </span>
+            <span className="text-warmgray-border">→</span>
+            <span className="flex items-center gap-1.5 rounded-lg bg-forest/5 px-3 py-1.5 text-forest">
+              <Users className="h-3.5 w-3.5" />
+              {data.activeGuardians} guardians
+            </span>
+            <span className="text-warmgray-border">→</span>
+            <span className="flex items-center gap-1.5 rounded-lg bg-forest/5 px-3 py-1.5 text-forest">
+              <ClipboardCheck className="h-3.5 w-3.5" />
+              {Math.round(data.updateCompletionRate * data.treesPlanted)} checked
+            </span>
+            <span className="text-warmgray-border">→</span>
+            <span className="flex items-center gap-1.5 rounded-lg bg-forest/5 px-3 py-1.5 text-forest">
+              <HeartPulse className="h-3.5 w-3.5" />
+              {data.healthBreakdown.healthy} healthy
+            </span>
+          </div>
+
           {/* Stacked bar */}
-          <div className="mb-3 flex h-6 w-full overflow-hidden rounded-full">
+          <div className="mb-4 flex h-7 w-full overflow-hidden rounded-full bg-warmgray-border/20">
             {healthyPct > 0 && (
               <div
-                className="bg-forest transition-all"
+                className="bg-forest transition-all duration-700"
                 style={{ width: `${healthyPct}%` }}
+                title={`Healthy: ${data.healthBreakdown.healthy}`}
               />
             )}
             {attentionPct > 0 && (
               <div
-                className="bg-ochre transition-all"
+                className="bg-alert-red transition-all duration-700"
                 style={{ width: `${attentionPct}%` }}
+                title={`Needs Attention: ${data.healthBreakdown.needs_attention}`}
               />
             )}
             {unknownPct > 0 && (
               <div
-                className="bg-warmgray-text/40 transition-all"
+                className="bg-warmgray-text/30 transition-all duration-700"
                 style={{ width: `${unknownPct}%` }}
+                title={`Unknown: ${data.healthBreakdown.unknown}`}
               />
             )}
           </div>
@@ -166,19 +199,19 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2">
               <span className="h-3 w-3 rounded-full bg-forest" />
               <span className="text-inktext">
-                Healthy: {data.healthBreakdown.healthy}
+                Healthy: <span className="font-semibold">{data.healthBreakdown.healthy}</span>
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="h-3 w-3 rounded-full bg-ochre" />
+              <span className="h-3 w-3 rounded-full bg-alert-red" />
               <span className="text-inktext">
-                Needs Attention: {data.healthBreakdown.needs_attention}
+                Needs Attention: <span className="font-semibold">{data.healthBreakdown.needs_attention}</span>
               </span>
             </div>
             <div className="flex items-center gap-2">
               <span className="h-3 w-3 rounded-full bg-warmgray-text/40" />
               <span className="text-inktext">
-                Unknown: {data.healthBreakdown.unknown}
+                Unknown: <span className="font-semibold">{data.healthBreakdown.unknown}</span>
               </span>
             </div>
           </div>
@@ -187,26 +220,31 @@ export default function DashboardPage() {
 
       {/* Trees requiring attention list */}
       {data.attentionTrees.length > 0 && (
-        <div className="rounded-xl border border-warmgray-border bg-cream-card p-5 shadow-sm">
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-inktext">
-            <AlertTriangle className="h-5 w-5 text-ochre" />
-            Trees Requiring Attention
-          </h2>
-          <div className="overflow-hidden rounded-lg border border-warmgray-border">
+        <div className="rounded-2xl border border-warmgray-border/60 bg-cream-card shadow-sm overflow-hidden">
+          <div className="border-b border-warmgray-border/50 bg-alert-red/3 px-6 py-4">
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-inktext">
+              <AlertTriangle className="h-5 w-5 text-alert-red" />
+              Attention Required
+            </h2>
+            <p className="mt-0.5 text-xs text-warmgray-text">
+              Trees that need intervention from your team.
+            </p>
+          </div>
+          <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-warmgray-border bg-cream">
-                  <th className="px-4 py-3 text-left font-medium text-warmgray-text">
+                <tr className="border-b border-warmgray-border/50 bg-cream/50">
+                  <th className="px-5 py-3 text-left font-semibold text-warmgray-text">
                     Tree ID
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-warmgray-text">
+                  <th className="px-5 py-3 text-left font-semibold text-warmgray-text">
                     Species
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-warmgray-text">
+                  <th className="px-5 py-3 text-left font-semibold text-warmgray-text">
                     Location
                   </th>
-                  <th className="px-4 py-3 text-left font-medium text-warmgray-text">
-                    Consecutive Flags
+                  <th className="px-5 py-3 text-left font-semibold text-warmgray-text">
+                    Flags
                   </th>
                 </tr>
               </thead>
@@ -214,20 +252,20 @@ export default function DashboardPage() {
                 {data.attentionTrees.map((tree) => (
                   <tr
                     key={tree.id}
-                    className="border-b border-warmgray-border last:border-b-0"
+                    className="border-b border-warmgray-border/30 last:border-b-0 transition-colors hover:bg-cream/30"
                   >
-                    <td className="px-4 py-3">
-                      <span className="font-medium text-inktext">
+                    <td className="px-5 py-3">
+                      <span className="font-semibold text-inktext">
                         {tree.id}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-inktext">{tree.species}</td>
-                    <td className="px-4 py-3 text-warmgray-text">
+                    <td className="px-5 py-3 text-inktext">{tree.species}</td>
+                    <td className="px-5 py-3 text-warmgray-text">
                       {tree.location}
                     </td>
-                    <td className="px-4 py-3">
-                      <span className="inline-flex items-center rounded-full bg-ochre/10 px-3 py-1 text-xs font-medium text-ochre">
-                        {tree.consecutiveNeedsAttentionCount}
+                    <td className="px-5 py-3">
+                      <span className="inline-flex items-center rounded-full bg-alert-red/10 px-3 py-1 text-xs font-semibold text-alert-red">
+                        {tree.consecutiveNeedsAttentionCount}×
                       </span>
                     </td>
                   </tr>
@@ -240,13 +278,11 @@ export default function DashboardPage() {
 
       {/* Empty state */}
       {totalTrees === 0 && (
-        <div className="rounded-xl border border-warmgray-border bg-cream-card p-12 text-center shadow-sm">
-          <TreePine className="mx-auto mb-3 h-10 w-10 text-warmgray-text" />
-          <p className="text-inktext">No trees planted yet</p>
-          <p className="mt-1 text-sm text-warmgray-text">
-            Create a campaign and recruit volunteers to start planting.
-          </p>
-        </div>
+        <EmptyState
+          icon={<Sprout className="h-9 w-9 text-forest/40" />}
+          title="No trees planted yet"
+          description="Create a campaign and recruit volunteers to start planting. Your impact journey begins with a single tree."
+        />
       )}
     </div>
   );
