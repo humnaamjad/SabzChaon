@@ -251,7 +251,7 @@ const trees = [
     plantingDate: iso(120),
     location: "Sukkur, Sindh",
     currentStatus: "needs_attention",
-    consecutiveNeedsAttentionCount: 3, // should have an alert
+    consecutiveNeedsAttentionCount: 3, // update-009/010/011 → alert-001
     createdAt: iso(120),
   },
   {
@@ -392,17 +392,33 @@ const treeUpdates = [
     aiConfidenceNote: "Continued wilting despite reported watering",
     submittedAt: ts(45),
   },
+  {
+    // 3rd consecutive needs_attention — this is the check-in that fires
+    // alert-001, so the tree's seeded count of 3 is backed by real history.
+    id: "update-011",
+    treeId: "SC-2025-000002",
+    guardianId: "user-vol-sara",
+    photoUrl: "/images/seed-photos/tree-dry-2.jpg",
+    textNote: "No improvement — leaves are drying out further.",
+    aiStatus: "needs_attention",
+    aiCareRecommendation:
+      "Severe drought stress. Arrange professional inspection urgently.",
+    aiConfidenceNote: "Widespread leaf desiccation and drooping canopy",
+    submittedAt: ts(30),
+  },
 ];
 
 // ─── NGO Alerts (§12) ────────────────────────────────────────────────────────
 
 const ngoAlerts = [
   {
+    // Fires on the 3rd consecutive needs_attention update (update-011,
+    // 30 days ago) — keeps counter (3), update history, and alert in sync.
     id: "alert-001",
     ngoId: "ngo-green-pakistan",
     treeId: "SC-2025-000002",
     reason: "3 consecutive needs_attention updates",
-    createdAt: iso(45),
+    createdAt: iso(30),
     resolvedAt: null,
   },
 ];
