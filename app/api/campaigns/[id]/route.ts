@@ -33,7 +33,7 @@ export async function GET(request: Request, context: RouteContext) {
     );
   }
 
-  const campaign = campaignDoc.data() as Campaign;
+  const campaign = { id: campaignDoc.id, ...campaignDoc.data() } as Campaign;
 
   if (campaign.ngoId !== session.ngoId) {
     return NextResponse.json(
@@ -49,13 +49,25 @@ export async function GET(request: Request, context: RouteContext) {
     .get();
 
   const members: CampaignMembership[] = membershipsSnap.docs.map(
-    (doc) => doc.data() as CampaignMembership
+    (doc) => ({ id: doc.id, ...doc.data() } as CampaignMembership)
   );
+
+  // Batch-fetch user names for display instead of raw user IDs
+  const memberNames: Record<string, string> = {};
+  if (members.length > 0) {
+    const userRefs = members.map((m) => db.collection("users").doc(m.userId));
+    const userDocs = await db.getAll(...userRefs);
+    for (const doc of userDocs) {
+      if (doc.exists) {
+        memberNames[doc.id] = (doc.data() as { name: string }).name;
+      }
+    }
+  }
 
   return NextResponse.json({
     success: true,
-    data: { campaign, members },
-  } satisfies ApiResponse<{ campaign: Campaign; members: CampaignMembership[] }>);
+    data: { campaign, members, memberNames },
+  } satisfies ApiResponse<{ campaign: Campaign; members: CampaignMembership[]; memberNames: Record<string, string> }>);
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
@@ -78,7 +90,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     );
   }
 
-  const campaign = campaignDoc.data() as Campaign;
+  const campaign = { id: campaignDoc.id, ...campaignDoc.data() } as Campaign;
 
   if (campaign.ngoId !== session.ngoId) {
     return NextResponse.json(
@@ -116,7 +128,7 @@ await db.collection("campaigns").doc(id).update({ status: "completed" });
 const result = await assignGuardians(id);
 
   const updatedDoc = await db.collection("campaigns").doc(id).get();
-  const updatedCampaign = updatedDoc.data() as Campaign;
+  const updatedCampaign = { id: updatedDoc.id, ...updatedDoc.data() } as Campaign;
 
   return NextResponse.json(
     { success: true, data: updatedCampaign } satisfies ApiResponse<Campaign>

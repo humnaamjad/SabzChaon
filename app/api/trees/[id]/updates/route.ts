@@ -116,6 +116,15 @@ export async function POST(
       );
     }
 
+    // Ownership check — only the assigned guardian may submit updates
+    const treeData = treeDoc.data()!;
+    if (treeData.guardianId !== userId) {
+      return Response.json(
+        { success: false, error: "Forbidden: you are not the guardian of this tree" } satisfies ApiResponse,
+        { status: 403 }
+      );
+    }
+
     // Upload photo to Supabase Storage if provided (§10.0)
     let photoUrl: string | null = null;
     if (photoFile && photoFile.size > 0) {
@@ -151,7 +160,7 @@ export async function POST(
         .get();
 
       const currentAvatar: GuardianAvatar = avatarDoc.exists
-        ? (avatarDoc.data() as GuardianAvatar)
+        ? ({ id: avatarDoc.id, ...avatarDoc.data() } as GuardianAvatar)
         : {
             id: userId,
             guardianId: userId,

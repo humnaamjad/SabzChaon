@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     .get();
 
   const campaigns: Campaign[] = snapshot.docs.map(
-    (doc) => doc.data() as Campaign
+    (doc) => ({ id: doc.id, ...doc.data() } as Campaign)
   );
 
   return NextResponse.json(

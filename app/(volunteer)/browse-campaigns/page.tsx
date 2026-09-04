@@ -10,8 +10,9 @@
 import { useState, useEffect } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebaseClient";
-import { TreePine, X } from "lucide-react";
+import { TreePine } from "lucide-react";
 import { useAuth } from "@/components/shared/AuthProvider";
+import { useToast } from "@/components/shared/Toast";
 import { CampaignCard } from "@/components/volunteer/CampaignCard";
 import PageHeader from "@/components/shared/PageHeader";
 import EmptyState from "@/components/shared/EmptyState";
@@ -20,12 +21,12 @@ import type { Campaign } from "@/types/entities";
 
 export default function BrowseCampaignPage() {
   const { user, userDoc, loading: authLoading } = useAuth();
+  const { toast } = useToast();
   const userId = user?.uid ?? null;
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [joinedIds, setJoinedIds] = useState<Set<string>>(new Set());
   const [joiningId, setJoiningId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   // Fetch open/active campaigns from Firestore
   useEffect(() => {
@@ -43,8 +44,9 @@ export default function BrowseCampaignPage() {
         })) as Campaign[];
         setCampaigns(data);
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to load campaigns"
+        toast(
+          err instanceof Error ? err.message : "Failed to load campaigns",
+          "error"
         );
       } finally {
         setLoading(false);
@@ -101,8 +103,9 @@ export default function BrowseCampaignPage() {
 
       setJoinedIds((prev) => new Set([...prev, campaignId]));
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to join campaign"
+      toast(
+        err instanceof Error ? err.message : "Failed to join campaign",
+        "error"
       );
     } finally {
       setJoiningId(null);
@@ -128,19 +131,6 @@ export default function BrowseCampaignPage() {
           title="Browse Campaigns"
           subtitle="Find open plantation campaigns near you and become a Guardian."
         />
-
-        {/* Error banner */}
-        {error && (
-          <div className="mb-6 flex items-start justify-between rounded-xl border border-brick/20 bg-brick/5 px-4 py-3">
-            <p className="text-sm text-brick">{error}</p>
-            <button
-              onClick={() => setError(null)}
-              className="ml-3 shrink-0 text-warmgray-text hover:text-inktext"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        )}
 
         {/* Campaign list */}
         {loading ? (

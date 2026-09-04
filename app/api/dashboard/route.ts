@@ -64,7 +64,7 @@ export async function GET(request: Request) {
       .collection("trees")
       .where("campaignId", "==", cid)
       .get();
-    allTrees.push(...treesSnap.docs.map((d) => d.data() as Tree));
+    allTrees.push(...treesSnap.docs.map((d) => ({ id: d.id, ...d.data() } as Tree)));
   }
 
   // 3. Trees planted count

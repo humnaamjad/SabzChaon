@@ -29,6 +29,7 @@ import type { Campaign, CampaignMembership } from "@/types/entities";
 interface CampaignDetailData {
   campaign: Campaign;
   members: CampaignMembership[];
+  memberNames?: Record<string, string>;
 }
 
 export default function CampaignDetailPage() {
@@ -313,7 +314,7 @@ export default function CampaignDetailPage() {
                         <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brown/8 ring-1 ring-brown/10">
                           <User className="h-3.5 w-3.5 text-brown" />
                         </div>
-                        <span className="font-medium text-inktext">{m.userId}</span>
+                        <span className="font-medium text-inktext">{data.memberNames?.[m.userId] ?? m.userId}</span>
                       </div>
                     </td>
                     <td className="px-5 py-3.5 text-warmgray-text">

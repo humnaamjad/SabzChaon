@@ -35,6 +35,11 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && isOwner(avatarId);
     }
 
+    match /campaignMemberships/{id} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+    }
+
     match /{document=**} {
       allow read, write: if false; // deny-by-default for anything not listed above
     }

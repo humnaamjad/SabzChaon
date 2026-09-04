@@ -43,7 +43,7 @@ export async function GET(request: Request) {
     .get();
 
   const alerts: NgoAlert[] = snapshot.docs.map(
-    (doc) => serializeDoc(doc.data() as Record<string, unknown>) as unknown as NgoAlert
+    (doc) => ({ id: doc.id, ...serializeDoc(doc.data() as Record<string, unknown>) } as unknown as NgoAlert)
   );
 
   return NextResponse.json(
@@ -93,7 +93,7 @@ export async function PATCH(request: Request) {
     );
   }
 
-  const alert = serializeDoc(alertDoc.data() as Record<string, unknown>) as unknown as NgoAlert;
+  const alert = { id: alertDoc.id, ...serializeDoc(alertDoc.data() as Record<string, unknown>) } as unknown as NgoAlert;
 
   if (alert.ngoId !== session.ngoId) {
     return NextResponse.json(
@@ -118,9 +118,9 @@ export async function PATCH(request: Request) {
     .update({ resolvedAt: new Date().toISOString() });
 
   const updatedDoc = await db.collection("ngoAlerts").doc(id).get();
-  const updatedAlert = serializeDoc(
+  const updatedAlert = { id: updatedDoc.id, ...serializeDoc(
     updatedDoc.data() as Record<string, unknown>
-  ) as unknown as NgoAlert;
+  ) } as unknown as NgoAlert;
 
   return NextResponse.json(
     { success: true, data: updatedAlert } satisfies ApiResponse<NgoAlert>

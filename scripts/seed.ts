@@ -11,6 +11,7 @@
  */
 
 import { initializeApp, cert, getApps } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import * as dotenv from "dotenv";
 import * as path from "path";
@@ -34,6 +35,7 @@ if (getApps().length === 0) {
 }
 
 const db = getFirestore();
+const auth = getAuth();
 
 // ─── Helper ──────────────────────────────────────────────────────────────────
 
@@ -41,6 +43,17 @@ function iso(daysAgo: number): string {
   const d = new Date();
   d.setDate(d.getDate() - daysAgo);
   return d.toISOString();
+}
+
+// TreeUpdate.submittedAt must be a Firestore Timestamp, not an ISO string —
+// POST /api/trees/[id]/updates writes Timestamp.now(), and Firestore orders
+// mixed types by type first (strings sort after timestamps), which broke the
+// "newest first" history ordering. Use scripts/migrate-submittedat.ts to
+// repair databases seeded before this fix.
+function ts(daysAgo: number): Timestamp {
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
+  return Timestamp.fromDate(d);
 }
 
 // ─── Seed Data ───────────────────────────────────────────────────────────────
@@ -255,127 +268,222 @@ const trees = [
 ];
 
 const treeUpdates = [
+  // Photos are local, royalty-free demo assets (Wikimedia Commons) so the demo
+  // has no external image dependency. Sources/licenses: public/images/seed-photos/ATTRIBUTION.md
   // Updates for SC-2026-000001 (healthy tree)
   {
     id: "update-001",
     treeId: "SC-2026-000001",
     guardianId: "user-vol-bilal",
-    photoUrl: "https://example.com/photos/neem-healthy-1.jpg",
+    photoUrl: "/images/seed-photos/tree-healthy-1.jpg",
     textNote: "Tree is growing well, new leaves visible.",
     aiStatus: "healthy",
     aiCareRecommendation: "Continue regular watering. Tree looks healthy.",
     aiConfidenceNote: "Green foliage clearly visible",
-    submittedAt: iso(7),
+    submittedAt: ts(7),
   },
   {
     id: "update-002",
     treeId: "SC-2026-000001",
     guardianId: "user-vol-bilal",
-    photoUrl: "https://example.com/photos/neem-healthy-2.jpg",
+    photoUrl: "/images/seed-photos/tree-healthy-2.jpg",
     textNote: "Weekly check-in, looking good.",
     aiStatus: "healthy",
     aiCareRecommendation: "No action needed. Keep up the good work.",
     aiConfidenceNote: "Full canopy, healthy green color",
-    submittedAt: iso(3),
+    submittedAt: ts(3),
   },
   // Updates for SC-2026-000002 (needs attention, count=2)
   {
     id: "update-003",
     treeId: "SC-2026-000002",
     guardianId: "user-vol-sara",
-    photoUrl: "https://example.com/photos/peepal-attention-1.jpg",
+    photoUrl: "/images/seed-photos/tree-yellowed-1.jpg",
     textNote: "Leaves look a bit yellow.",
     aiStatus: "needs_attention",
     aiCareRecommendation:
       "Yellowing leaves may indicate overwatering or nutrient deficiency. Reduce watering frequency.",
     aiConfidenceNote: "Yellowing visible on lower leaves",
-    submittedAt: iso(7),
+    submittedAt: ts(7),
   },
   {
     id: "update-004",
     treeId: "SC-2026-000002",
     guardianId: "user-vol-sara",
-    photoUrl: "https://example.com/photos/peepal-attention-2.jpg",
+    photoUrl: "/images/seed-photos/tree-yellowed-2.jpg",
     textNote: "Still yellowing, some leaves dropping.",
     aiStatus: "needs_attention",
     aiCareRecommendation:
       "Persistent yellowing suggests possible root issues. Check soil drainage.",
     aiConfidenceNote: "Leaf discoloration and drop visible",
-    submittedAt: iso(3),
+    submittedAt: ts(3),
   },
   // Updates for SC-2026-000003 (needs attention, count=2)
   {
     id: "update-005",
     treeId: "SC-2026-000003",
     guardianId: "user-vol-ali",
-    photoUrl: "https://example.com/photos/banyan-attention-1.jpg",
+    photoUrl: "/images/seed-photos/tree-diseased-1.jpg",
     textNote: "Some brown spots on leaves.",
     aiStatus: "needs_attention",
     aiCareRecommendation:
       "Brown spots may indicate fungal infection. Consider improving air circulation.",
     aiConfidenceNote: "Brown spots visible on leaf surfaces",
-    submittedAt: iso(6),
+    submittedAt: ts(6),
   },
   {
     id: "update-006",
     treeId: "SC-2026-000003",
     guardianId: "user-vol-ali",
-    photoUrl: "https://example.com/photos/banyan-attention-2.jpg",
+    photoUrl: "/images/seed-photos/tree-diseased-2.jpg",
     textNote: "Spots spreading.",
     aiStatus: "needs_attention",
     aiCareRecommendation:
       "Spreading discoloration is concerning. Prune affected branches if possible.",
     aiConfidenceNote: "Increased brown area compared to typical patterns",
-    submittedAt: iso(2),
+    submittedAt: ts(2),
   },
   // Update for SC-2026-000004 (healthy)
   {
     id: "update-007",
     treeId: "SC-2026-000004",
     guardianId: "user-vol-zainab",
-    photoUrl: "https://example.com/photos/gulmohar-healthy.jpg",
+    photoUrl: "/images/seed-photos/tree-flowering-1.jpg",
     textNote: "Beautiful growth, first flowers appearing!",
     aiStatus: "healthy",
     aiCareRecommendation: "Excellent condition. Maintain current care routine.",
     aiConfidenceNote: "Vibrant green color and new growth visible",
-    submittedAt: iso(4),
+    submittedAt: ts(4),
   },
   // Update for SC-2026-000005 (healthy but had one needs_attention)
   {
     id: "update-008",
     treeId: "SC-2026-000005",
     guardianId: "user-vol-hamza",
-    photoUrl: "https://example.com/photos/amaltas-mixed.jpg",
+    photoUrl: "/images/seed-photos/tree-flowering-2.jpg",
     textNote: "Was wilting last week but recovering now.",
     aiStatus: "healthy",
     aiCareRecommendation:
       "Recovery signs visible. Continue regular watering schedule.",
     aiConfidenceNote: "New leaf growth visible alongside older healthy leaves",
-    submittedAt: iso(5),
+    submittedAt: ts(5),
   },
   // Updates for completed campaign tree with alert
   {
     id: "update-009",
     treeId: "SC-2025-000002",
     guardianId: "user-vol-sara",
-    photoUrl: "https://example.com/photos/kikar-alert-1.jpg",
+    photoUrl: "/images/seed-photos/tree-dry-1.jpg",
     textNote: "Tree looks dry.",
     aiStatus: "needs_attention",
     aiCareRecommendation: "Tree shows signs of drought stress. Increase watering.",
     aiConfidenceNote: "Wilted and dry leaves visible",
-    submittedAt: iso(60),
+    submittedAt: ts(60),
   },
   {
     id: "update-010",
     treeId: "SC-2025-000002",
     guardianId: "user-vol-sara",
-    photoUrl: "https://example.com/photos/kikar-alert-2.jpg",
+    photoUrl: "/images/seed-photos/tree-dry-2.jpg",
     textNote: "Still dry despite watering.",
     aiStatus: "needs_attention",
     aiCareRecommendation:
       "Persistent dryness may indicate root damage. Professional inspection recommended.",
     aiConfidenceNote: "Continued wilting despite reported watering",
-    submittedAt: iso(45),
+    submittedAt: ts(45),
+  },
+];
+
+// ─── NGO Alerts (§12) ────────────────────────────────────────────────────────
+
+const ngoAlerts = [
+  {
+    id: "alert-001",
+    ngoId: "ngo-green-pakistan",
+    treeId: "SC-2025-000002",
+    reason: "3 consecutive needs_attention updates",
+    createdAt: iso(45),
+    resolvedAt: null,
+  },
+];
+
+// ─── Campaign Memberships ────────────────────────────────────────────────────
+
+const campaignMemberships = [
+  {
+    id: "membership-001",
+    campaignId: "campaign-monsoon-2026",
+    userId: "user-vol-bilal",
+    joinedAt: iso(9),
+    becameGuardian: true,
+  },
+  {
+    id: "membership-002",
+    campaignId: "campaign-monsoon-2026",
+    userId: "user-vol-sara",
+    joinedAt: iso(9),
+    becameGuardian: true,
+  },
+  {
+    id: "membership-003",
+    campaignId: "campaign-monsoon-2026",
+    userId: "user-vol-ali",
+    joinedAt: iso(8),
+    becameGuardian: true,
+  },
+  {
+    id: "membership-004",
+    campaignId: "campaign-monsoon-2026",
+    userId: "user-vol-zainab",
+    joinedAt: iso(8),
+    becameGuardian: true,
+  },
+  {
+    id: "membership-005",
+    campaignId: "campus-greening-2026",
+    userId: "user-vol-hamza",
+    joinedAt: iso(5),
+    becameGuardian: false,
+  },
+];
+
+// ─── Guardian Avatars (§11 — varied growth stages for demo) ─────────────────
+
+const guardianAvatars = [
+  {
+    id: "user-vol-bilal",
+    guardianId: "user-vol-bilal",
+    growthStage: "sapling",
+    lastUpdatedAt: iso(3),
+    missedUpdateStreak: 0,
+  },
+  {
+    id: "user-vol-sara",
+    guardianId: "user-vol-sara",
+    growthStage: "sprout",
+    lastUpdatedAt: iso(3),
+    missedUpdateStreak: 1,
+  },
+  {
+    id: "user-vol-ali",
+    guardianId: "user-vol-ali",
+    growthStage: "young_tree",
+    lastUpdatedAt: iso(2),
+    missedUpdateStreak: 0,
+  },
+  {
+    id: "user-vol-zainab",
+    guardianId: "user-vol-zainab",
+    growthStage: "seedling",
+    lastUpdatedAt: iso(4),
+    missedUpdateStreak: 0,
+  },
+  {
+    id: "user-vol-hamza",
+    guardianId: "user-vol-hamza",
+    growthStage: "sprout",
+    lastUpdatedAt: iso(5),
+    missedUpdateStreak: 0,
   },
 ];
 
@@ -390,6 +498,9 @@ async function seed() {
     { name: "users", docs: users },
     { name: "trees", docs: trees },
     { name: "treeUpdates", docs: treeUpdates },
+    { name: "ngoAlerts", docs: ngoAlerts },
+    { name: "campaignMemberships", docs: campaignMemberships },
+    { name: "guardianAvatars", docs: guardianAvatars },
   ];
 
   for (const collection of collections) {
@@ -402,6 +513,28 @@ async function seed() {
     }
     await batch.commit();
     console.log(`  ✓ ${collection.name} done`);
+  }
+
+  // ─── Create Firebase Auth accounts (idempotent) ─────────────────────────
+  console.log("  Creating Auth accounts...");
+  for (const u of users) {
+    try {
+      await auth.createUser({
+        uid: u.id,
+        email: u.email,
+        password: "demo1234",
+      });
+      console.log(`    ✓ Created auth account: ${u.email}`);
+    } catch (err: unknown) {
+      // uid-already-exists is expected on re-runs
+      if (typeof err === "object" && err !== null && "code" in err && (err as { code: string }).code === "auth/uid-already-exists") {
+        console.log(`    • Auth account already exists: ${u.email}`);
+      } else if (typeof err === "object" && err !== null && "code" in err && (err as { code: string }).code === "auth/email-already-exists") {
+        console.log(`    • Email already exists: ${u.email}`);
+      } else {
+        throw err;
+      }
+    }
   }
 
   console.log("\n✅ Seed complete! Firestore is ready for development.");
