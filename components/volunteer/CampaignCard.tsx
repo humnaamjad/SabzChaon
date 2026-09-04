@@ -32,14 +32,14 @@ export function CampaignCard({
       <div className="p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-inktext group-hover:text-forest transition-colors">
+            <h3 className="text-lg font-semibold text-inktext group-hover:text-forest transition-colors capitalize">
               {campaign.title}
             </h3>
 
             <div className="mt-3 space-y-2">
               <div className="flex items-center gap-2 text-sm text-warmgray-text">
                 <MapPin className="h-4 w-4 text-brown" />
-                <span>{campaign.location}</span>
+                <span className="capitalize">{campaign.location}</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-warmgray-text">
                 <Calendar className="h-4 w-4 text-brown" />

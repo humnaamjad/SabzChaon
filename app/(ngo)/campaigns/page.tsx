@@ -192,7 +192,7 @@ export default function CampaignsPage() {
                 <div className="h-1.5 bg-gradient-to-r from-forest/70 via-forest/40 to-leaf-accent/40" />
                 <div className="flex flex-1 flex-col p-5">
                   <div className="mb-3 flex items-start justify-between gap-2">
-                    <h3 className="text-lg font-semibold leading-snug text-inktext transition-colors group-hover:text-forest">
+                    <h3 className="text-lg font-semibold leading-snug text-inktext transition-colors group-hover:text-forest capitalize">
                       {campaign.title}
                     </h3>
                     <StatusBadge status={campaign.status} />
@@ -200,7 +200,7 @@ export default function CampaignsPage() {
                   <div className="space-y-2 text-sm text-warmgray-text">
                     <div className="flex items-center gap-2">
                       <MapPin className="h-3.5 w-3.5 shrink-0 text-brown" />
-                      <span className="truncate">{campaign.location}</span>
+                      <span className="truncate capitalize">{campaign.location}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Calendar className="h-3.5 w-3.5 shrink-0 text-brown" />

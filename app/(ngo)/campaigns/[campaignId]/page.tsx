@@ -141,11 +141,11 @@ export default function CampaignDetailPage() {
                 <p className="text-xs font-medium uppercase tracking-widest text-forest/60">
                   Plantation Campaign
                 </p>
-                <h1 className="mt-1 text-2xl font-bold tracking-tight text-inktext sm:text-3xl">
+                <h1 className="mt-1 text-2xl font-bold tracking-tight text-inktext sm:text-3xl capitalize">
                   {campaign.title}
                 </h1>
                 <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-warmgray-text">
-                  <span className="flex items-center gap-1.5">
+                  <span className="flex items-center gap-1.5 capitalize">
                     <MapPin className="h-3.5 w-3.5 text-brown" />
                     {campaign.location}
                   </span>
