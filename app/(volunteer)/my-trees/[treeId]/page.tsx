@@ -254,10 +254,10 @@ export default function TreeProfilePage() {
             {/* Tree details grid */}
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
-                { icon: <MapPin className="h-5 w-5 text-brown" />, label: "Location", value: tree.location },
+                { icon: <MapPin className="h-5 w-5 text-brown" />, label: "Location", value: <span className="capitalize">{tree.location}</span> },
                 { icon: <Calendar className="h-5 w-5 text-brown" />, label: "Planting Date", value: new Date(tree.plantingDate).toLocaleDateString() },
                 { icon: <Leaf className="h-5 w-5 text-forest" />, label: "Species", value: tree.species },
-                { icon: <TreePine className="h-5 w-5 text-forest" />, label: "Campaign", value: campaignTitle ?? tree.campaignId },
+                { icon: <TreePine className="h-5 w-5 text-forest" />, label: "Campaign", value: <span className="capitalize">{campaignTitle ?? tree.campaignId}</span> },
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 rounded-xl bg-cream p-3">
                   {item.icon}

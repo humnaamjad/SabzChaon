@@ -31,7 +31,7 @@ export function TreeCard({ tree }: { tree: Tree }) {
 
           <div className="mt-4 flex items-center justify-between">
             <div className="flex items-center gap-4 text-sm text-warmgray-text">
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5 capitalize">
                 <MapPin className="h-3.5 w-3.5 text-brown" />
                 {tree.location}
               </span>

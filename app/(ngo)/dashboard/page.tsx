@@ -297,7 +297,7 @@ export default function DashboardPage() {
                       </div>
                     </td>
                     <td className="px-5 py-3.5 text-inktext">{tree.species}</td>
-                    <td className="px-5 py-3.5 text-warmgray-text">
+                    <td className="px-5 py-3.5 text-warmgray-text capitalize">
                       {tree.location}
                     </td>
                     <td className="px-5 py-3.5">
