@@ -37,16 +37,17 @@ const statusConfig: Record<
     label: "Unknown",
     icon: <HelpCircle className="h-3 w-3" />,
   },
-  // Campaign statuses
+  // Campaign statuses — palette aligned with the volunteer CampaignCard:
+  // upcoming → ochre (scheduled), active → forest (live & joinable)
   upcoming: {
-    bg: "bg-forest/10",
-    text: "text-forest",
+    bg: "bg-ochre/10",
+    text: "text-ochre",
     label: "Upcoming",
     icon: <CalendarClock className="h-3 w-3" />,
   },
   active: {
-    bg: "bg-ochre/10",
-    text: "text-ochre",
+    bg: "bg-forest/10",
+    text: "text-forest",
     label: "Active",
     icon: <Activity className="h-3 w-3" />,
   },

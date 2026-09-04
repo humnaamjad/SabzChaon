@@ -9,10 +9,10 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/components/shared/AuthProvider";
 import { useToast } from "@/components/shared/Toast";
-import LoadingState from "@/components/shared/LoadingState";
 import ErrorState from "@/components/shared/ErrorState";
 import EmptyState from "@/components/shared/EmptyState";
 import StatusBadge from "@/components/ngo/StatusBadge";
+import { SkeletonList } from "@/components/shared/Skeleton";
 import {
   ArrowLeft,
   MapPin,
@@ -22,6 +22,7 @@ import {
   CheckCircle,
   User,
   Megaphone,
+  Loader2,
 } from "lucide-react";
 import type { Campaign, CampaignMembership } from "@/types/entities";
 
@@ -97,11 +98,23 @@ export default function CampaignDetailPage() {
     }
   }
 
-  if (loading) return <LoadingState message="Loading campaign…" />;
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-8">
+        <SkeletonList count={3} />
+      </div>
+    );
+  }
   if (error || !data)
     return <ErrorState message={error ?? "Campaign not found"} retry={fetchCampaign} />;
 
   const { campaign, members } = data;
+
+  // Recruitment progress (presentation-only, derived from existing data)
+  const recruitmentPct =
+    campaign.volunteersNeeded > 0
+      ? Math.min(100, (members.length / campaign.volunteersNeeded) * 100)
+      : 0;
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 animate-fade-up">
@@ -124,7 +137,10 @@ export default function CampaignDetailPage() {
                 <Megaphone className="h-7 w-7 text-forest" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold tracking-tight text-inktext">
+                <p className="text-xs font-medium uppercase tracking-widest text-forest/60">
+                  Plantation Campaign
+                </p>
+                <h1 className="mt-1 text-2xl font-bold tracking-tight text-inktext sm:text-3xl">
                   {campaign.title}
                 </h1>
                 <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-warmgray-text">
@@ -146,39 +162,106 @@ export default function CampaignDetailPage() {
 
       {/* Campaign stats */}
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        {[
-          { icon: <TreePine className="h-5 w-5 text-forest" />, label: "Trees Planned", value: campaign.treesPlannedCount },
-          { icon: <Users className="h-5 w-5 text-forest" />, label: "Volunteers Needed", value: campaign.volunteersNeeded },
-          { icon: <CheckCircle className="h-5 w-5 text-forest" />, label: "Joined", value: members.length },
-        ].map((stat, i) => (
-          <div key={i} className="rounded-2xl border border-warmgray-border/60 bg-cream-card p-5 shadow-sm transition-shadow hover:shadow-md">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-forest/8">
-                {stat.icon}
-              </div>
-              <div>
-                <p className="text-sm text-warmgray-text">{stat.label}</p>
-                <p className="text-xl font-bold text-inktext">{stat.value}</p>
-              </div>
+        <div className="rounded-2xl border border-warmgray-border/60 bg-cream-card p-5 shadow-sm transition-shadow hover:shadow-md">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-forest/8">
+              <TreePine className="h-5 w-5 text-forest" />
+            </div>
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-warmgray-text">
+                Trees Planned
+              </p>
+              <p className="text-xl font-bold text-inktext">
+                {campaign.treesPlannedCount}
+              </p>
             </div>
           </div>
-        ))}
+        </div>
+        <div className="rounded-2xl border border-warmgray-border/60 bg-cream-card p-5 shadow-sm transition-shadow hover:shadow-md">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-forest/8">
+              <Users className="h-5 w-5 text-forest" />
+            </div>
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-warmgray-text">
+                Volunteers Needed
+              </p>
+              <p className="text-xl font-bold text-inktext">
+                {campaign.volunteersNeeded}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-2xl border border-warmgray-border/60 bg-cream-card p-5 shadow-sm transition-shadow hover:shadow-md">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-forest/8">
+              <CheckCircle className="h-5 w-5 text-forest" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium uppercase tracking-wider text-warmgray-text">
+                Volunteers Joined
+              </p>
+              <p className="text-xl font-bold text-inktext">
+                {members.length}
+                <span className="text-sm font-medium text-warmgray-text">
+                  {" "}of {campaign.volunteersNeeded}
+                </span>
+              </p>
+            </div>
+          </div>
+          {/* Recruitment progress */}
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-warmgray-border/30">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-forest to-leaf-accent transition-all duration-700"
+              style={{ width: `${recruitmentPct}%` }}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Close out action */}
-      {campaign.status !== "completed" && (
-        <div className="mb-8 rounded-2xl border border-warmgray-border/60 bg-cream-card p-5 shadow-sm">
+      {campaign.status !== "completed" ? (
+        <div className="mb-6 flex flex-col gap-4 rounded-2xl border border-forest/15 bg-gradient-to-r from-forest/5 to-transparent p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-forest/8 ring-1 ring-forest/10">
+              <CheckCircle className="h-5 w-5 text-forest" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-inktext">
+                Ready to wrap up?
+              </h3>
+              <p className="mt-0.5 text-xs leading-relaxed text-warmgray-text">
+                Closing out marks this campaign as completed and triggers
+                guardian assignment for joined volunteers.
+              </p>
+            </div>
+          </div>
           <button
             onClick={handleComplete}
             disabled={completing}
-            className="flex items-center gap-2 rounded-xl bg-forest px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-forest/10 transition-all duration-200 hover:bg-forest-hover hover:shadow-md disabled:opacity-50"
+            className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-forest px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-forest/10 transition-all duration-200 hover:bg-forest-hover hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <CheckCircle className="h-4 w-4" />
-            {completing ? "Closing out…" : "Close Out Campaign"}
+            {completing ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Closing out…
+              </>
+            ) : (
+              <>
+                <CheckCircle className="h-4 w-4" />
+                Close Out Campaign
+              </>
+            )}
           </button>
-          <p className="mt-3 text-xs text-warmgray-text">
-            Closing out the campaign triggers guardian assignment for joined
-            volunteers.
+        </div>
+      ) : (
+        <div className="mb-6 flex items-center gap-3 rounded-2xl border border-forest/15 bg-forest/5 p-5 shadow-sm">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-forest/10 ring-1 ring-forest/15">
+            <CheckCircle className="h-4.5 w-4.5 text-forest" />
+          </div>
+          <p className="text-sm text-inktext">
+            This campaign has been closed out — guardian trees have been assigned
+            to joined volunteers.
           </p>
         </div>
       )}
@@ -208,13 +291,13 @@ export default function CampaignDetailPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-warmgray-border/50 bg-cream/50">
-                  <th className="px-5 py-3 text-left font-semibold text-warmgray-text">
+                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-warmgray-text">
                     Volunteer
                   </th>
-                  <th className="px-5 py-3 text-left font-semibold text-warmgray-text">
+                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-warmgray-text">
                     Joined
                   </th>
-                  <th className="px-5 py-3 text-left font-semibold text-warmgray-text">
+                  <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-warmgray-text">
                     Guardian
                   </th>
                 </tr>
@@ -223,20 +306,20 @@ export default function CampaignDetailPage() {
                 {members.map((m) => (
                   <tr
                     key={m.id}
-                    className="border-b border-warmgray-border/30 last:border-b-0 transition-colors hover:bg-cream/30"
+                    className="border-b border-warmgray-border/30 last:border-b-0 transition-colors hover:bg-cream/40"
                   >
-                    <td className="px-5 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brown/8">
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brown/8 ring-1 ring-brown/10">
                           <User className="h-3.5 w-3.5 text-brown" />
                         </div>
                         <span className="font-medium text-inktext">{m.userId}</span>
                       </div>
                     </td>
-                    <td className="px-5 py-3 text-warmgray-text">
+                    <td className="px-5 py-3.5 text-warmgray-text">
                       {new Date(m.joinedAt).toLocaleDateString()}
                     </td>
-                    <td className="px-5 py-3">
+                    <td className="px-5 py-3.5">
                       {m.becameGuardian ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-forest/10 px-3 py-1 text-xs font-semibold text-forest">
                           <CheckCircle className="h-3 w-3" />
