@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/components/shared/AuthProvider";
 import { TreeCard } from "@/components/volunteer/TreeCard";
+import { DueRemindersBanner } from "@/components/volunteer/DueRemindersBanner";
 import PageHeader from "@/components/shared/PageHeader";
 import EmptyState from "@/components/shared/EmptyState";
 import { SkeletonList } from "@/components/shared/Skeleton";
@@ -88,6 +89,9 @@ export default function MyTreesPage() {
   return (
     <main className="min-h-screen bg-cream">
       <div className="mx-auto max-w-4xl px-4 py-8 animate-fade-up">
+        {/* Due check-in reminders (§19 Part 4) */}
+        <DueRemindersBanner />
+
         {/* Guardian greeting */}
         {trees.length > 0 && (
           <div className="mb-6 rounded-2xl border border-forest/15 bg-gradient-to-br from-forest/5 to-transparent p-6 shadow-sm">

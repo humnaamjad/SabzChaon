@@ -37,6 +37,7 @@ import {
 import { useAuth } from "@/components/shared/AuthProvider";
 import { StatusBadge } from "@/components/volunteer/StatusBadge";
 import { TreeUpdateForm } from "@/components/volunteer/TreeUpdateForm";
+import { DueRemindersBanner } from "@/components/volunteer/DueRemindersBanner";
 import GuardianAvatar from "@/components/GuardianAvatar";
 import type { Tree, TreeUpdate, GuardianGrowthStage, Campaign } from "@/types/entities";
 
@@ -219,6 +220,9 @@ export default function TreeProfilePage() {
           Back to My Trees
         </button>
 
+        {/* Due check-in reminder for this tree (§19 Part 4) */}
+        <DueRemindersBanner treeId={treeId} />
+
         {/* ─── HERO SECTION ─────────────────────────────────────────────── */}
         <div className="mb-6 overflow-hidden rounded-2xl border border-warmgray-border/60 bg-cream-card shadow-sm">
           {/* Top gradient accent */}
@@ -335,7 +339,7 @@ export default function TreeProfilePage() {
         {/* ─── TWO-COLUMN: Update Form + History ─────────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Update submission form */}
-          <div>
+          <div id="update-form" className="scroll-mt-6">
             <TreeUpdateForm
               treeId={treeId}
               authToken={authToken}

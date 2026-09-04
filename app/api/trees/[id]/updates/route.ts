@@ -210,6 +210,28 @@ export async function POST(
       });
     }
 
+    // Acknowledge any pending reminders for this tree + guardian so
+    // DueRemindersBanner stops surfacing them after a check-in.
+    try {
+      const pendingReminders = await db
+        .collection("reminders")
+        .where("treeId", "==", treeId)
+        .where("guardianId", "==", userId)
+        .where("status", "==", "pending")
+        .get();
+
+      if (pendingReminders.size > 0) {
+        const ackBatch = db.batch();
+        pendingReminders.forEach((doc) => {
+          ackBatch.update(doc.ref, { status: "acknowledged" });
+        });
+        await ackBatch.commit();
+      }
+    } catch (reminderErr) {
+      // Non-fatal — the update itself succeeded; log and continue.
+      console.error("[POST /api/trees/[id]/updates] Failed to acknowledge reminders:", reminderErr);
+    }
+
     const createdUpdate: TreeUpdate = {
       id: updateRef.id,
       treeId,

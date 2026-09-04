@@ -1,22 +1,62 @@
+// GET /api/reminders/due — due check-in reminders for the authenticated
+// guardian (§6 Reminder, §19 Part 4 — Feature 6). "Due" = status "pending"
+// and dueAt in the past (lib/reminders.ts). Scoped to the caller per §9:
+// other guardians' reminders are never returned.
+
+import { NextRequest } from "next/server";
 import { getAdminFirestore } from "@/lib/firebase";
-import type { QueryDocumentSnapshot } from "firebase-admin/firestore";
+import { getAuthUserId } from "@/lib/serverAuth";
 import { getDueReminders } from "@/lib/reminders";
+import { Timestamp } from "firebase-admin/firestore";
 import type { ApiResponse, Reminder } from "@/types/entities";
 
-export async function GET() {
+export const dynamic = "force-dynamic";
+
+export async function GET(request: NextRequest) {
+  // Reminders are per-guardian data — verify the caller before querying (§9).
+  let guardianId: string;
+  try {
+    guardianId = await getAuthUserId(request);
+  } catch {
+    return Response.json(
+      { success: false, error: "Authentication required" } satisfies ApiResponse,
+      { status: 401 }
+    );
+  }
+
   try {
     const db = await getAdminFirestore();
     const snapshot = await db
       .collection("reminders")
+      .where("guardianId", "==", guardianId)
       .where("status", "==", "pending")
       .get();
 
-    const reminders: Reminder[] = snapshot.docs.map((doc: QueryDocumentSnapshot) => ({
-      id: doc.id,
-      ...(doc.data() as Omit<Reminder, "id">),
-    }));
+    // dueAt/sentAt are ISO strings per §6 — normalize Timestamps defensively
+    // (same pattern as /api/trees): lib/reminders.ts parses dueAt with
+    // new Date(), which returns Invalid Date for Firestore Timestamps.
+    const reminders: Reminder[] = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        guardianId: data.guardianId,
+        treeId: data.treeId,
+        dueAt:
+          data.dueAt instanceof Timestamp
+            ? data.dueAt.toDate().toISOString()
+            : data.dueAt,
+        sentAt:
+          data.sentAt instanceof Timestamp
+            ? data.sentAt.toDate().toISOString()
+            : data.sentAt ?? null,
+        status: data.status,
+      };
+    });
 
-    const dueReminders = getDueReminders(reminders);
+    // Most overdue first
+    const dueReminders = getDueReminders(reminders).sort((a, b) =>
+      a.dueAt.localeCompare(b.dueAt)
+    );
 
     const res: ApiResponse<Reminder[]> = {
       success: true,

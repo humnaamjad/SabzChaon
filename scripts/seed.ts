@@ -487,6 +487,48 @@ const guardianAvatars = [
   },
 ];
 
+// ─── Reminders (§6, §19 Part 4 — Feature 6) ──────────────────────────────────
+// Unlike TreeUpdate.submittedAt above, dueAt stays an ISO string: the only
+// writer is this seed script, and lib/reminders.ts parses it with new Date(),
+// which would produce Invalid Date for a Firestore Timestamp. The due route
+// filters in JS (no orderBy/range query on dueAt), so mixed-type ordering is
+// not a concern — but every writer must stay on ISO strings regardless.
+
+const reminders = [
+  {
+    id: "reminder-001",
+    guardianId: "user-vol-sara",
+    treeId: "SC-2026-000002",
+    dueAt: iso(1), // yesterday — due now
+    sentAt: null,
+    status: "pending",
+  },
+  {
+    id: "reminder-002",
+    guardianId: "user-vol-sara",
+    treeId: "SC-2025-000002",
+    dueAt: iso(3), // 3 days ago — due now (demos the multi-reminder banner)
+    sentAt: null,
+    status: "pending",
+  },
+  {
+    id: "reminder-003",
+    guardianId: "user-vol-bilal",
+    treeId: "SC-2026-000001",
+    dueAt: iso(-6), // 6 days from now — not due yet (no banner)
+    sentAt: null,
+    status: "pending",
+  },
+  {
+    id: "reminder-004",
+    guardianId: "user-vol-ali",
+    treeId: "SC-2026-000003",
+    dueAt: iso(2),
+    sentAt: iso(2),
+    status: "sent", // sent but not acknowledged — filtered out by status
+  },
+];
+
 // ─── Seed Function ───────────────────────────────────────────────────────────
 
 async function seed() {
@@ -501,6 +543,7 @@ async function seed() {
     { name: "ngoAlerts", docs: ngoAlerts },
     { name: "campaignMemberships", docs: campaignMemberships },
     { name: "guardianAvatars", docs: guardianAvatars },
+    { name: "reminders", docs: reminders },
   ];
 
   for (const collection of collections) {
